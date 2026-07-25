@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+type Theme = "dark" | "light";
+
 type Stage = {
   id: string;
   label: string;
@@ -9,15 +11,16 @@ type Stage = {
   status: "pass" | "warn" | "fail" | "pending";
   worker: string;
   duration: string;
+  evidence: "fixture" | "executable";
 };
 
 const stages: Stage[] = [
-  { id: "tests", label: "Existing tests", detail: "214 / 214 passed", status: "pass", worker: "test-runner", duration: "1.2s" },
-  { id: "types", label: "Type contracts", detail: "0 violations", status: "pass", worker: "pyright", duration: "0.4s" },
-  { id: "mutation", label: "Mutation probe", detail: "locale branch survived", status: "warn", worker: "mutator", duration: "1.7s" },
-  { id: "property", label: "Generated property", detail: "locale-aware case equivalence failed", status: "fail", worker: "property-engine", duration: "2.1s" },
-  { id: "shrink", label: "Input minimized", detail: "30 code points → 2", status: "fail", worker: "shrinker", duration: "0.3s" },
-  { id: "behavior", label: "Behavioral diff", detail: "old valid · patch violates", status: "fail", worker: "differential", duration: "0.1s" },
+  { id: "tests", label: "Existing tests", detail: "214 / 214 passed", status: "pass", worker: "test-runner", duration: "1.2s", evidence: "fixture" },
+  { id: "types", label: "Type contracts", detail: "0 violations", status: "pass", worker: "pyright", duration: "0.4s", evidence: "fixture" },
+  { id: "mutation", label: "Mutation probe", detail: "locale branch survived", status: "warn", worker: "mutator", duration: "1.7s", evidence: "fixture" },
+  { id: "property", label: "Generated property", detail: "locale-aware case equivalence failed", status: "fail", worker: "property-engine", duration: "2.1s", evidence: "executable" },
+  { id: "shrink", label: "Input minimized", detail: "30 code points → 2", status: "fail", worker: "shrinker", duration: "0.3s", evidence: "executable" },
+  { id: "behavior", label: "Behavioral diff", detail: "old valid · patch violates", status: "fail", worker: "differential", duration: "0.1s", evidence: "executable" },
 ];
 
 const diff = [
@@ -39,6 +42,7 @@ export default function Home() {
   const [activeStage, setActiveStage] = useState(stages.length - 1);
   const [running, setRunning] = useState(false);
   const [tab, setTab] = useState<"evidence" | "report">("evidence");
+  const [theme, setTheme] = useState<Theme>("dark");
 
   useEffect(() => {
     if (!running) return;
@@ -50,6 +54,12 @@ export default function Home() {
     return () => window.clearTimeout(timer);
   }, [running, activeStage]);
 
+  useEffect(() => {
+    const currentTheme =
+      document.documentElement.dataset.theme === "light" ? "light" : "dark";
+    setTheme(currentTheme);
+  }, []);
+
   const completed = useMemo(() => stages.slice(0, activeStage + 1), [activeStage]);
   const shrinkFrame = shrinkFrames[activeStage < 4 ? 0 : activeStage === 4 ? 1 : 2];
 
@@ -57,6 +67,14 @@ export default function Home() {
     setActiveStage(-1);
     setRunning(true);
     window.setTimeout(() => setActiveStage(0), 180);
+  }
+
+  function toggleTheme() {
+    const nextTheme: Theme = theme === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = nextTheme;
+    document.documentElement.style.colorScheme = nextTheme;
+    window.localStorage.setItem("patchproof-theme", nextTheme);
+    setTheme(nextTheme);
   }
 
   return (
@@ -72,7 +90,20 @@ export default function Home() {
           <a href="#evidence">Evidence</a>
           <a href="#architecture">Architecture</a>
         </nav>
-        <a className="ghost-button" href="#integration-seams">Integration seams ↓</a>
+        <div className="header-actions">
+          <button
+            className="theme-toggle"
+            type="button"
+            onClick={toggleTheme}
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+            aria-pressed={theme === "light"}
+            title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+          >
+            <span aria-hidden="true">{theme === "dark" ? "☼" : "☾"}</span>
+            <span>{theme === "dark" ? "Light" : "Dark"}</span>
+          </button>
+          <a className="ghost-button" href="#integration-seams">Integration seams ↓</a>
+        </div>
       </header>
 
       <section className="hero" id="top">
@@ -123,7 +154,7 @@ export default function Home() {
         <div className="section-heading">
           <div>
             <span className="kicker">Verification proof</span>
-            <h2>One patch. Six independent claims.</h2>
+            <h2>One patch. Six evidence stages.</h2>
           </div>
           <div className="run-status">
             <span className={running ? "spinner" : "status-stop"} />
@@ -147,7 +178,10 @@ export default function Home() {
                     <span className={`status-icon ${visible ? stage.status : "pending"}`}>
                       {visible ? (stage.status === "pass" ? "✓" : stage.status === "warn" ? "!" : "×") : "·"}
                     </span>
-                    <div className="stage-text"><strong>{stage.label}</strong><small>{visible ? stage.detail : "waiting"}</small></div>
+                    <div className="stage-text">
+                      <strong>{stage.label}<em>{stage.evidence}</em></strong>
+                      <small>{visible ? stage.detail : "waiting"}</small>
+                    </div>
                     <code>{stage.worker}</code>
                     <time>{visible ? stage.duration : "—"}</time>
                   </div>
@@ -209,8 +243,8 @@ export default function Home() {
             <article><span className="metric-label">VERIFIED</span><strong>2 / 3</strong><p>Existing examples and API shape hold. Locale-invariant behavior does not.</p></article>
             <article><span className="metric-label amber-text">UNVERIFIED</span><strong>2</strong><p>Concurrent cache access and non-BMP normalization remain outside this run’s budget.</p></article>
             <article><span className="metric-label cyan-text">GENERATED TEST</span><strong>1</strong><p><code>test_equal_folded_tr_tr_counterexample</code> is ready to paste into the repository.</p></article>
-            <article><span className="metric-label">PERFORMANCE</span><strong>−3.1%</strong><p>Median latency improved; peak allocation is unchanged within measurement noise.</p></article>
-            <article><span className="metric-label">API COMPATIBILITY</span><strong className="green-text">Compatible</strong><p>Exports, parameters, and return type are unchanged.</p></article>
+            <article><span className="metric-label">PERFORMANCE · FIXTURE</span><strong>−3.1%</strong><p>Illustrative median-latency fixture; run repository benchmarks before using it as evidence.</p></article>
+            <article><span className="metric-label">API COMPATIBILITY · FIXTURE</span><strong className="green-text">Compatible</strong><p>The demo fixture records an unchanged export, parameters, and return type; no external checker ran.</p></article>
             <article className="recommendation"><span className="metric-label">RECOMMENDATION</span><strong>Request changes</strong><p>Restore locale-aware folding and commit the generated regression test.</p></article>
           </div>
         ) : (
@@ -222,7 +256,7 @@ export default function Home() {
               <label>Mutation sensitivity <span>68%</span><i><b style={{ width: "68%" }} /></i></label>
               <label>Environment coverage <span>43%</span><i><b style={{ width: "43%" }} /></i></label>
             </div>
-            <p>Confidence is an evidence-quality summary, not a probability that the patch is correct. PatchProof never claims exhaustive verification.</p>
+            <p>The component scores are deterministic demo fixtures. Confidence summarizes evidence quality; it is not a probability that the patch is correct or an exhaustive-verification claim.</p>
           </div>
         )}
       </section>

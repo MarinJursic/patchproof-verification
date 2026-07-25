@@ -1,6 +1,7 @@
 {
   "name": "patchproof-verification",
   "version": "0.1.0",
+  "description": "Adversarial TypeScript/Python verification that finds, executes, minimizes, and exports counterexamples for faulty patches.",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
