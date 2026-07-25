@@ -2,8 +2,10 @@ node_modules/
 .npm-cache/
 dist/
 .next/
+/out/
 .wrangler/
 .vinext/
+next-env.d.ts
 *.tsbuildinfo
 .env*
 !.env.example

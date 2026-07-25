@@ -13,8 +13,10 @@ test("PatchProof metadata, evidence labels, and theme behavior are product-speci
 
   assert.match(layout, /PatchProof — Adversarial Software Verification/);
   assert.doesNotMatch(layout, /codex-preview|Your site is taking shape/);
-  assert.match(layout, /x-forwarded-host/);
-  assert.match(layout, /new URL\("\/demo\/patchproof-console\.png", metadataBase\)/);
+  assert.doesNotMatch(layout, /next\/headers|x-forwarded-host/);
+  assert.match(layout, /NEXT_PUBLIC_SITE_URL/);
+  assert.match(layout, /NEXT_PUBLIC_BASE_PATH/);
+  assert.match(layout, /demo\/patchproof-console\.png/);
   assert.match(page, /Generated property/);
   assert.match(page, /Counterexample/);
   assert.match(page, /API COMPATIBILITY/);
