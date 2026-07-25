@@ -2,6 +2,9 @@
 
 **Adversarial software verification for human- and AI-generated patches.**
 
+[![Live preview](https://img.shields.io/badge/live-preview-2ea44f?logo=github)](https://marinjursic.github.io/patchproof-verification/)
+[![Preview status](https://github.com/MarinJursic/patchproof-verification/actions/workflows/pages.yml/badge.svg)](https://github.com/MarinJursic/patchproof-verification/actions/workflows/pages.yml)
+
 PatchProof does not ask only whether the existing tests pass. It asks whether it can construct an input that makes the patch violate an invariant—and only reports a defect when it has executable evidence.
 
 ![PatchProof verification console showing the patch, six evidence stages, and minimized Unicode counterexample](./public/demo/patchproof-walkthrough.png)
