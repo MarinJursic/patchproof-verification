@@ -1,0 +1,52 @@
+{
+  "name": "patchproof-verification",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext dev",
+    "build": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext build",
+    "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
+    "test": "node --test tests/*.test.mjs",
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
+    "typecheck": "tsc --noEmit",
+    "build:vscode": "npm --prefix integrations/vscode-extension run build",
+    "package:vscode": "npm --prefix integrations/vscode-extension run package",
+    "test:vscode": "npm --prefix integrations/vscode-extension test"
+  },
+  "dependencies": {
+    "next": "16.2.11",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "1.47.0",
+    "@cloudflare/workers-types": "5.20260724.1",
+    "@eslint/js": "10.0.1",
+    "@tailwindcss/postcss": "4.2.1",
+    "@types/node": "22.19.19",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@types/vscode": "1.125.0",
+    "@vitejs/plugin-react": "6.0.2",
+    "@vitejs/plugin-rsc": "0.5.26",
+    "@vscode/vsce": "3.9.2",
+    "esbuild": "0.28.1",
+    "eslint": "10.8.0",
+    "react-server-dom-webpack": "19.2.8",
+    "tailwindcss": "4.2.1",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.59.3",
+    "vinext": "0.0.50",
+    "vite": "8.1.5",
+    "wrangler": "4.114.0"
+  },
+  "overrides": {
+    "brace-expansion": "5.0.8",
+    "postcss": "8.5.23",
+    "sharp": "0.35.3"
+  },
+  "type": "module"
+}

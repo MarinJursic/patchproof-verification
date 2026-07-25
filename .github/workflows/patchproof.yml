@@ -1,0 +1,30 @@
+name: PatchProof integration smoke
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      post_check:
+        description: Post a separate PatchProof Check Run
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  deterministic-evidence:
+    name: Deterministic demo evidence
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - id: patchproof
+        uses: ./.github/actions/patchproof
+        with:
+          post-check: ${{ inputs.post_check || false }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Validate report artifact
+        shell: bash
+        run: python3 -m json.tool "${{ steps.patchproof.outputs.report }}" >/dev/null

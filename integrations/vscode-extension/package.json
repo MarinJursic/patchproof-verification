@@ -1,0 +1,95 @@
+{
+  "name": "patchproof-vscode",
+  "displayName": "PatchProof",
+  "description": "Run PatchProof evidence jobs and surface minimized counterexamples as diagnostics.",
+  "version": "0.1.0",
+  "publisher": "patchproof-local",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Testing",
+    "Other"
+  ],
+  "keywords": [
+    "verification",
+    "property-testing",
+    "counterexample",
+    "code-review"
+  ],
+  "activationEvents": [
+    "onCommand:patchproof.runDemo",
+    "onCommand:patchproof.openReport",
+    "onCommand:patchproof.clearDiagnostics"
+  ],
+  "main": "./dist/extension.cjs",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "Report viewing and diagnostic clearing work without trust. Starting a verifier process requires workspace trust."
+    }
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "patchproof.runDemo",
+        "title": "PatchProof: Run Deterministic Demo"
+      },
+      {
+        "command": "patchproof.openReport",
+        "title": "PatchProof: Open Latest Report"
+      },
+      {
+        "command": "patchproof.clearDiagnostics",
+        "title": "PatchProof: Clear Diagnostics"
+      }
+    ],
+    "configuration": {
+      "title": "PatchProof",
+      "properties": {
+        "patchproof.executable": {
+          "type": "string",
+          "default": "",
+          "scope": "resource",
+          "description": "Absolute path or command name for the patchproof executable. Empty auto-detects python/.venv before PATH."
+        },
+        "patchproof.locale": {
+          "type": "string",
+          "default": "tr-TR",
+          "scope": "resource",
+          "description": "Locale passed to the deterministic demo verifier."
+        },
+        "patchproof.maxExamples": {
+          "type": "integer",
+          "default": 64,
+          "minimum": 1,
+          "maximum": 10000,
+          "scope": "resource",
+          "description": "Maximum generated examples in the demo budget."
+        },
+        "patchproof.timeoutMs": {
+          "type": "integer",
+          "default": 30000,
+          "minimum": 1000,
+          "maximum": 120000,
+          "scope": "resource",
+          "description": "Hard subprocess timeout in milliseconds."
+        },
+        "patchproof.targetFile": {
+          "type": "string",
+          "default": "src/search.ts",
+          "scope": "resource",
+          "description": "Workspace-relative file receiving demo diagnostics."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "package": "npm run check && npm run build && vsce package --allow-missing-repository --no-dependencies --out dist/patchproof-vscode-0.1.0.vsix",
+    "test": "node --test tests/*.test.mjs"
+  }
+}

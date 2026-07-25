@@ -1,0 +1,45 @@
+name: PatchProof evidence check
+description: Run the deterministic PatchProof verifier and publish a GitHub job summary.
+inputs:
+  post-check:
+    description: Post a separate GitHub Check Run through the Checks API.
+    required: false
+    default: "false"
+  github-token:
+    description: Token with checks:write; required only when post-check is true.
+    required: false
+    default: ""
+outputs:
+  report:
+    description: Path to the generated PatchProof JSON report.
+    value: ${{ steps.verify.outputs.report }}
+runs:
+  using: composite
+  steps:
+    - id: verify
+      name: Build PatchProof evidence
+      shell: bash
+      run: |
+        set -euo pipefail
+        environment="$RUNNER_TEMP/patchproof-action-venv"
+        report="$RUNNER_TEMP/patchproof-report.json"
+        python3 -m venv "$environment"
+        "$environment/bin/pip" install --disable-pip-version-check -q \
+          -e "$GITHUB_ACTION_PATH/../../../python"
+        "$environment/bin/patchproof" demo --format json >"$report"
+        "$environment/bin/patchproof" github-check \
+          --repository "$GITHUB_REPOSITORY" \
+          --sha "$GITHUB_SHA" \
+          --summary >>"$GITHUB_STEP_SUMMARY"
+        echo "report=$report" >>"$GITHUB_OUTPUT"
+    - name: Post separate GitHub Check Run
+      if: ${{ inputs.post-check == 'true' }}
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      run: |
+        set -euo pipefail
+        "$RUNNER_TEMP/patchproof-action-venv/bin/patchproof" github-check \
+          --repository "$GITHUB_REPOSITORY" \
+          --sha "$GITHUB_SHA" \
+          --post
