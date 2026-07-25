@@ -12,7 +12,7 @@ test("PatchProof metadata, evidence labels, and theme behavior are product-speci
   ]);
 
   assert.match(layout, /PatchProof — Adversarial Software Verification/);
-  assert.doesNotMatch(layout, /codex-preview|Your site is taking shape/);
+  assert.doesNotMatch(layout, /starter-preview|Your site is taking shape/);
   assert.doesNotMatch(layout, /next\/headers|x-forwarded-host/);
   assert.match(layout, /NEXT_PUBLIC_SITE_URL/);
   assert.match(layout, /NEXT_PUBLIC_BASE_PATH/);
