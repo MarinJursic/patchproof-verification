@@ -30,20 +30,32 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: "PatchProof — Your tests passed. Your patch didn’t.",
       description: "Executable counterexamples for subtle software regressions.",
-      images: [new URL("/og-v2.png", metadataBase).toString()],
+      images: [{
+        url: new URL("/demo/patchproof-console.png", metadataBase).toString(),
+        width: 1600,
+        height: 1000,
+        alt: "PatchProof adversarial verification console",
+      }],
     },
     twitter: {
       card: "summary_large_image",
       title: "PatchProof",
       description: "Adversarial software verification with minimized counterexamples.",
-      images: [new URL("/og-v2.png", metadataBase).toString()],
+      images: [new URL("/demo/patchproof-console.png", metadataBase).toString()],
     },
   };
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var saved=localStorage.getItem("patchproof-theme");var theme=saved==="light"||saved==="dark"?saved:(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark");document.documentElement.dataset.theme=theme;document.documentElement.style.colorScheme=theme}catch(_){document.documentElement.dataset.theme="dark"}})();`,
+          }}
+        />
+      </head>
       <body>{children}</body>
     </html>
   );

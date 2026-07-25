@@ -4,9 +4,32 @@
 
 PatchProof does not ask only whether the existing tests pass. It asks whether it can construct an input that makes the patch violate an invariant—and only reports a defect when it has executable evidence.
 
-![PatchProof verification console](./public/demo/patchproof-dashboard-v2.png)
+![PatchProof verification console showing the patch, six evidence stages, and minimized Unicode counterexample](./public/demo/patchproof-walkthrough.png)
 
-> The image above is an illustrative product preview, not a runtime screenshot. It is intentionally limited to the implemented six-stage Unicode-locale demo. The interactive console replays the same deterministic evidence represented by the Python verifier.
+> Literal local-app capture in the light theme. The top half shows the passing
+> baseline and changed case-folding implementation; the lower half follows the
+> six-stage proof to `["İ", "i"]`. `FIXTURE` and `EXECUTABLE` chips prevent
+> illustrative evidence from being mistaken for a tool result.
+
+## Showcase
+
+The shortest useful walkthrough is:
+
+1. Read the red/green diff: locale-aware `toLocaleLowerCase(locale)` was replaced
+   with locale-independent `toLowerCase()`.
+2. Select **Replay verification** to reveal each stage in deterministic order.
+3. Follow the proof graph from three labeled demo fixtures to the executable
+   property, shrink, and differential checks.
+4. Inspect the minimized counterexample: the reference returns `true` for
+   `["İ", "i"]` under `tr-TR`; the patch returns `false`.
+5. Switch between **Light** and **Dark** in the header. The preference persists
+   on the device and defaults to the operating-system preference on first use.
+6. Open **Confidence report** with a pointer or the left/right arrow keys. Its
+   score describes evidence quality, not patch-correctness probability.
+
+The capture is intentionally the running product rather than a composited
+mockup. The app is responsive, supports reduced-motion preferences, preserves
+visible keyboard focus, and exposes state through ARIA labels and live regions.
 
 ## Why this project exists
 
@@ -41,7 +64,8 @@ The result is a generated regression test and a **request changes** recommendati
   - generated-property failure and shrink trace;
   - old/patched execution comparison;
   - evidence confidence, verified properties, unverified behavior, generated test, performance delta, API compatibility, and recommendation;
-  - keyboard-accessible controls and reduced-motion support.
+  - keyboard-accessible tabs, visible focus, reduced-motion support, and an
+    accessible light/dark theme toggle with local persistence.
 - A typed Python/FastAPI verifier with:
   - content-addressed job IDs derived from every request field;
   - deterministic timestamps, seed, corpus, execution budget, and reports;
@@ -324,7 +348,11 @@ The project’s local verification command covers:
 | CLI | JSON, human summary, GitHub dry-run/summary/post failure, inconclusive run, invalid input, and exit-code contracts |
 | Smoke | CLI report parsed by `json.tool` |
 
-The web console is a deterministic presentation of the built-in report rather than an API client. Its replay control resets the proof graph and reveals all six workers in order. The Python service remains the authoritative executable engine.
+The web console is a deterministic presentation of the built-in report rather
+than an API client. Its replay control resets the proof graph and reveals all
+six stages in order. The Python service remains the authoritative executable
+engine. The first three web stages are visibly labeled `FIXTURE`; the property,
+minimization, and behavioral-diff stages are labeled `EXECUTABLE`.
 
 ## Scope and limitations
 
@@ -346,9 +374,19 @@ For production, isolate every checkout in an ephemeral, network-disabled sandbox
 
 PatchProof is grounded in execution-first verification:
 
-- [SWE-bench](https://arxiv.org/abs/2310.06770) introduced realistic repository-level software engineering tasks; its verified subset emphasizes human-validated evaluation instances.
+- [SWE-bench](https://www.swebench.com/SWE-bench/) evaluates patches by applying
+  them to real repositories and running tests in reproducible containerized
+  environments; [SWE-bench Verified](https://www.swebench.com/verified.html)
+  is a human-validated 500-instance subset.
 - [SWE-smith](https://arxiv.org/abs/2504.21798) describes scalable construction of executable software-engineering task data.
-- [Hypothesis](https://hypothesis.readthedocs.io/en/latest/reference/api.html#hypothesis.Phase) separates generation, targeted mutation, shrinking, and explanation phases; PatchProof’s MVP mirrors those responsibilities with a deterministic corpus and minimizer.
+- [Hypothesis](https://hypothesis.readthedocs.io/en/latest/reference/api.html#hypothesis.Phase)
+  documents separate generation, reuse, targeting, and shrinking phases.
+  PatchProof mirrors the execution-and-shrink shape with a much smaller,
+  purpose-built deterministic corpus; it does not embed Hypothesis.
+- [mutmut](https://mutmut.readthedocs.io/en/latest/) describes mutation testing
+  as changing code and checking whether the test suite notices. PatchProof’s
+  “mutation probe” is explicitly a fixture plus input-ordering hint, not a real
+  mutmut execution.
 - Zeller and Hildebrandt’s original [delta debugging paper](https://www.st.cs.uni-saarland.de/papers/tse2002/tse2002.pdf) motivates systematic reduction of failure-inducing inputs.
 - Unicode’s normative [SpecialCasing data](https://www.unicode.org/Public/UCD/latest/ucd/SpecialCasing.txt) documents context- and language-sensitive mappings, including Turkish dotted and dotless I.
 - [FastAPI request models](https://fastapi.tiangolo.com/tutorial/body/) provide runtime validation and OpenAPI schema generation from Pydantic types.
