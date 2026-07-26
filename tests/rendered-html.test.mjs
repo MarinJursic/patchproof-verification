@@ -59,14 +59,19 @@ test("GitHub integration is runnable and credential handling is explicit", async
   assert.match(workflow, /checks: write/);
 });
 
-test("README showcase is a substantial literal app capture with an explanation", async () => {
-  const [readme, capture] = await Promise.all([
+test("README showcase uses a substantial continuous app walkthrough with an explanation", async () => {
+  const [readme, animation, video, poster] = await Promise.all([
     readFile(new URL("README.md", root), "utf8"),
-    stat(new URL("public/demo/patchproof-walkthrough.png", root)),
+    stat(new URL("docs/walkthrough/app-walkthrough.gif", root)),
+    stat(new URL("docs/walkthrough/app-walkthrough.mp4", root)),
+    stat(new URL("docs/walkthrough/app-walkthrough-poster.jpg", root)),
   ]);
-  assert.match(readme, /patchproof-walkthrough\.png/);
-  assert.match(readme, /Literal local-app capture/);
+  assert.match(readme, /Continuous app walkthrough/);
+  assert.match(readme, /app-walkthrough\.gif/);
+  assert.match(readme, /app-walkthrough\.mp4/);
+  assert.match(readme, /one continuous pass through the real product/);
   assert.match(readme, /FIXTURE.*EXECUTABLE/s);
-  assert.match(readme, /Switch between \*\*Light\*\* and \*\*Dark\*\*/);
-  assert.ok(capture.size > 100_000);
+  assert.ok(animation.size > 1_000_000);
+  assert.ok(video.size > 1_000_000);
+  assert.ok(poster.size > 50_000);
 });

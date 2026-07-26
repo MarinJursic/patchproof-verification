@@ -7,32 +7,29 @@
 
 PatchProof does not ask only whether the existing tests pass. It asks whether it can construct an input that makes the patch violate an invariant—and only reports a defect when it has executable evidence.
 
-![PatchProof verification console showing the patch, six evidence stages, and minimized Unicode counterexample](./public/demo/patchproof-walkthrough.png)
+## Continuous app walkthrough
 
-> Literal local-app capture in the light theme. The top half shows the passing
-> baseline and changed case-folding implementation; the lower half follows the
-> six-stage proof to `["İ", "i"]`. `FIXTURE` and `EXECUTABLE` chips prevent
-> illustrative evidence from being mistaken for a tool result.
+[![Continuous PatchProof walkthrough replaying verification, inspecting evidence confidence, and switching themes](docs/walkthrough/app-walkthrough.gif)](docs/walkthrough/app-walkthrough.mp4)
 
-## Showcase
+[Watch the full-resolution H.264 walkthrough](docs/walkthrough/app-walkthrough.mp4) · [Open the poster frame](docs/walkthrough/app-walkthrough-poster.jpg)
 
-The shortest useful walkthrough is:
+This uninterrupted 19-second capture shows the running application:
 
-1. Read the red/green diff: locale-aware `toLocaleLowerCase(locale)` was replaced
-   with locale-independent `toLowerCase()`.
-2. Select **Replay verification** to reveal each stage in deterministic order.
-3. Follow the proof graph from three labeled demo fixtures to the executable
-   property, shrink, and differential checks.
-4. Inspect the minimized counterexample: the reference returns `true` for
-   `["İ", "i"]` under `tr-TR`; the patch returns `false`.
-5. Switch between **Light** and **Dark** in the header. The preference persists
-   on the device and defaults to the operating-system preference on first use.
-6. Open **Confidence report** with a pointer or the left/right arrow keys. Its
-   score describes evidence quality, not patch-correctness probability.
+- replaying all six verification stages from the passing baseline through the
+  executable property, minimization, and behavioral-difference checks;
+- reducing the Turkish case-folding failure to `["İ", "i"]`, where the
+  reference returns `true` and the patch returns `false`;
+- reviewing the actionable counterexample packet and **Request changes**
+  recommendation;
+- opening the confidence report, whose score describes evidence quality rather
+  than patch-correctness probability; and
+- switching the complete interface from light to dark theme.
 
-The capture is intentionally the running product rather than a composited
-mockup. The app is responsive, supports reduced-motion preferences, preserves
-visible keyboard focus, and exposes state through ARIA labels and live regions.
+The recording is one continuous pass through the real product, not a composited
+or explanatory animation. `FIXTURE` and `EXECUTABLE` labels remain visible so
+presentation evidence cannot be mistaken for an externally measured result.
+The app is responsive, supports reduced-motion preferences, preserves visible
+keyboard focus, and exposes state through ARIA labels and live regions.
 
 ## Why this project exists
 
