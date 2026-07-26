@@ -4,6 +4,10 @@
 
 [![Live preview](https://img.shields.io/badge/live-preview-2ea44f?logo=github)](https://marinjursic.github.io/PatchProof/)
 [![Preview status](https://github.com/MarinJursic/PatchProof/actions/workflows/pages.yml/badge.svg)](https://github.com/MarinJursic/PatchProof/actions/workflows/pages.yml)
+[![Next.js](https://img.shields.io/badge/Next.js-16-111714?logo=nextdotjs)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Tests](https://img.shields.io/badge/tests-54%20passing-176BCA)](#verification)
 
 PatchProof is a verdict-first evidence workbench for a harder code-review question:
 can a passing patch be falsified by a small, replayable counterexample? The default
@@ -22,7 +26,8 @@ application:
 
 - replaying the Unicode case through the six-stage execution ledger;
 - watching the verdict and completed evidence accumulate without leaving the review;
-- switching to the DST-fold case and opening its exact generated regression;
+- selecting the failed generated property, opening its regression and verified
+  scope, and expanding the execution trace;
 - switching the complete light/dark theme.
 
 The recording is one continuous pass through the real product, not a composited
