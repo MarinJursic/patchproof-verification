@@ -27,7 +27,7 @@ describe("PatchProof forensic workbench", () => {
 
     await user.click(screen.getByRole("button", { name: /Shortest path/ }));
     expect(screen.getByText("Disconnected graph path")).toBeTruthy();
-    await user.click(screen.getByRole("tab", { name: "provenance" }));
+    await user.click(screen.getByRole("tab", { name: "Run details" }));
     expect(screen.getByText(/QuixBugs benchmark shape/)).toBeTruthy();
   });
 
@@ -38,10 +38,14 @@ describe("PatchProof forensic workbench", () => {
     await user.click(screen.getByRole("button", { name: /Replay/ }));
     expect(screen.getByText("RUNNING · 0/6")).toBeTruthy();
     expect(screen.getAllByText("waiting")).toHaveLength(6);
+    expect(
+      screen.getByRole("button", { name: "Export JSON" }).hasAttribute("disabled"),
+    ).toBe(true);
 
     await user.click(screen.getByRole("button", { name: /Pause/ }));
     await user.click(screen.getByRole("button", { name: "Step →" }));
-    expect(screen.getByText("COMPLETE · 1/6")).toBeTruthy();
+    expect(screen.getByText("PAUSED · 1/6")).toBeTruthy();
+    expect(screen.getByText("Review paused")).toBeTruthy();
     expect(screen.getByText(/214 \/ 214 passed/)).toBeTruthy();
   });
 
@@ -54,7 +58,9 @@ describe("PatchProof forensic workbench", () => {
     expect(screen.getByText("RUNNING · 0/6")).toBeTruthy();
     expect(screen.getByText("FINAL EVIDENCE GATED")).toBeTruthy();
     expect(screen.queryByText("MINIMIZED COUNTEREXAMPLE")).toBeNull();
-    expect(screen.getByRole("tab", { name: "finding" }).hasAttribute("disabled")).toBe(true);
+    expect(
+      screen.getByRole("tab", { name: "Finding" }).hasAttribute("disabled"),
+    ).toBe(false);
     expect(screen.getByText("Gated until this replay step completes")).toBeTruthy();
   });
 
@@ -63,17 +69,17 @@ describe("PatchProof forensic workbench", () => {
     const writeText = vi.spyOn(navigator.clipboard, "writeText");
     render(<Home />);
 
-    await user.click(screen.getByRole("tab", { name: "test" }));
+    await user.click(screen.getByRole("tab", { name: "Regression test" }));
     await user.click(screen.getByRole("button", { name: "Copy" }));
     expect(writeText).toHaveBeenCalledWith(
       expect.stringContaining("test_equal_folded_tr_tr_counterexample"),
     );
 
-    await user.click(screen.getByRole("tab", { name: "scope" }));
+    await user.click(screen.getByRole("tab", { name: "Verified scope" }));
     expect(screen.getByText("NOT ESTABLISHED")).toBeTruthy();
     expect(screen.getByText(/No correctness probability/)).toBeTruthy();
 
-    await user.click(screen.getByRole("tab", { name: "provenance" }));
+    await user.click(screen.getByRole("tab", { name: "Run details" }));
     expect(screen.getByText("Unicode 17.0.0 · seed 20260725")).toBeTruthy();
   });
 
@@ -82,7 +88,7 @@ describe("PatchProof forensic workbench", () => {
     vi.spyOn(navigator.clipboard, "writeText").mockRejectedValueOnce(new Error("denied"));
     render(<Home />);
 
-    await user.click(screen.getByRole("tab", { name: "test" }));
+    await user.click(screen.getByRole("tab", { name: "Regression test" }));
     await user.click(screen.getByRole("button", { name: "Copy" }));
     expect(screen.getByRole("button", { name: "Copy failed" })).toBeTruthy();
   });
@@ -96,9 +102,9 @@ describe("PatchProof forensic workbench", () => {
     expect(document.documentElement.dataset.theme).toBe("dark");
 
     const traceToggle = screen.getByRole("button", { name: /EXECUTION TRACE/ });
-    expect(traceToggle.getAttribute("aria-expanded")).toBe("true");
-    await user.click(traceToggle);
     expect(traceToggle.getAttribute("aria-expanded")).toBe("false");
+    await user.click(traceToggle);
+    expect(traceToggle.getAttribute("aria-expanded")).toBe("true");
   });
 
   it("keeps stage selection keyboard-operable", () => {
@@ -107,6 +113,23 @@ describe("PatchProof forensic workbench", () => {
     fireEvent.keyDown(mutation, { key: "Enter" });
     fireEvent.click(mutation);
     expect(mutation.getAttribute("aria-current")).toBe("step");
-    expect(screen.getAllByText("SURVIVED replace locale-aware fold with str.lower()")).toHaveLength(2);
+    expect(screen.getAllByText("SURVIVED replace locale-aware fold with str.lower()")).toHaveLength(1);
+  });
+
+  it("supports standard Home and End navigation across evidence tabs", async () => {
+    const user = userEvent.setup();
+    render(<Home />);
+
+    const finding = screen.getByRole("tab", { name: "Finding" });
+    await user.click(finding);
+    await user.keyboard("{End}");
+    expect(document.activeElement).toBe(
+      screen.getByRole("tab", { name: "Run details" }),
+    );
+
+    await user.keyboard("{Home}");
+    expect(document.activeElement).toBe(
+      screen.getByRole("tab", { name: "Finding" }),
+    );
   });
 });

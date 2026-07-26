@@ -5,11 +5,11 @@
 [![Live preview](https://img.shields.io/badge/live-preview-2ea44f?logo=github)](https://marinjursic.github.io/patchproof-verification/)
 [![Preview status](https://github.com/MarinJursic/patchproof-verification/actions/workflows/pages.yml/badge.svg)](https://github.com/MarinJursic/patchproof-verification/actions/workflows/pages.yml)
 
-PatchProof is an evidence workbench for a harder code-review question: can a passing
-patch be falsified by a small, replayable counterexample? It keeps the diff, command,
-observed output, scope, gaps, generated regression, source manifest, and artifact
-digest together so a reviewer can audit the finding without inferring correctness from
-presentation polish.
+PatchProof is a verdict-first evidence workbench for a harder code-review question:
+can a passing patch be falsified by a small, replayable counterexample? The default
+view answers three questions in order—what changed, why it fails, and how the result
+was established—while regression, scope, provenance, and raw trace details remain
+available on demand.
 
 ## Continuous app walkthrough
 
@@ -20,12 +20,10 @@ presentation polish.
 The uninterrupted capture shows one continuous review session in the real
 application:
 
-- replaying and stepping through the six-stage execution ledger;
-- inspecting command, observed output, strategy scope, and the collapsible trace;
-- switching among the Unicode, DST-fold, and shortest-path cases;
-- reviewing the finding, generated regression, established scope, explicit gaps,
-  provenance, license, and evidence digest;
-- exporting an evidence bundle and switching the complete light/dark theme.
+- replaying the Unicode case through the six-stage execution ledger;
+- watching the verdict and completed evidence accumulate without leaving the review;
+- switching to the DST-fold case and opening its exact generated regression;
+- switching the complete light/dark theme.
 
 The recording is one continuous pass through the real product, not a composited
 or explanatory animation. `FIXTURE` and `EXECUTABLE` semantics remain explicit in
@@ -51,8 +49,8 @@ The workbench ships three materially different, source-attributed examples:
 The first case models this realistic regression:
 
 ```diff
-- return a.toLocaleLowerCase(locale) === b.toLocaleLowerCase(locale)
-+ return a.toLowerCase() === b.toLowerCase()
+- return locale_lower(a, locale) == locale_lower(b, locale)
++ return a.lower() == b.lower()
 ```
 
 All original tests pass. A mutation-guided property probe targets the removed locale branch, finds a Turkish case-mapping divergence, and minimizes:
@@ -62,23 +60,27 @@ All original tests pass. A mutation-guided property probe targets the removed lo
 → 14 accepted reductions, all preserving the failure
 → ["İ", "i"]
 
-reference implementation (tr-TR): true
-patched implementation:           false
+reference locale_lower (tr-TR): true
+patched str.lower:              false
 ```
 
 The result is a generated regression test and a **request changes** recommendation—not a speculative model opinion.
 
 ## What is implemented
 
-- A full-height Next.js/TypeScript forensic workbench with:
+- A responsive Next.js/TypeScript review workbench with:
+  - a plain-language request-changes summary and minimized behavior comparison
+    before lower-level execution detail;
   - three selectable evidence cases and exact patch diffs;
-  - replay, pause/continue, and single-step transport controls;
-  - a selectable six-stage ledger with command, output, engine, duration, and scope;
+  - one primary replay action, with pause/continue and single-step controls grouped
+    under replay options;
+  - a selectable six-stage evidence path with command, output, duration, and scope;
   - minimized counterexamples, reference/patched comparison, and shrink traces;
   - generated regression tests with copy support;
   - separate established-scope and not-established lists;
-  - source/version/license/digest provenance and JSON evidence export;
-  - a collapsible execution trace;
+  - source/version/license/digest provenance and JSON evidence export under run
+    details;
+  - a collapsible raw execution trace;
   - keyboard-operable controls, visible focus, reduced-motion support, responsive
     layouts, and a persistent full light/dark theme.
 - A typed Python/FastAPI verifier with:

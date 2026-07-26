@@ -83,7 +83,7 @@ export const scenarios: Scenario[] = [
     patchRef: "8f29d1a",
     sourceFile: "src/search.py",
     verdict: "FALSIFIED",
-    question: "Does locale-aware membership remain equivalent after removing the locale argument?",
+    question: "Does locale-aware case equality remain equivalent after removing the locale argument?",
     diff: [
       { kind: "context", number: 41, text: "def equal_folded(a: str, b: str, locale: str) -> bool:" },
       { kind: "remove", number: 42, text: "    return locale_lower(a, locale) == locale_lower(b, locale)" },
@@ -101,8 +101,8 @@ export const scenarios: Scenario[] = [
       property: "locale-aware case equivalence",
       original: '["İSTANBUL PORTAL", "istanbul portal"]',
       minimized: '["İ", "i"]',
-      reference: "true · toLocaleLowerCase('tr-TR')",
-      patched: "false · toLowerCase()",
+      reference: "true · locale_lower(…, 'tr-TR')",
+      patched: "false · str.lower()",
       shrinkTrace: ['["İSTANBUL PORTAL", "istanbul portal"]', '["İSTANBUL", "istanbul"]', '["İ", "i"]'],
     },
     generatedTest: `def test_equal_folded_tr_tr_counterexample():
@@ -152,9 +152,12 @@ export const scenarios: Scenario[] = [
       shrinkTrace: ["6-hour transition window", "30-minute boundary window", "01:30 · fold 0 / fold 1"],
     },
     generatedTest: `def test_display_time_preserves_dst_fold():
-    first = datetime(2025, 11, 2, 1, 30, fold=0, tzinfo=NY)
-    second = first.replace(fold=1)
-    assert first.astimezone(UTC) != second.astimezone(UTC)`,
+    zone = ZoneInfo("America/New_York")
+    first_utc = datetime(2025, 11, 2, 5, 30, tzinfo=UTC)
+    second_utc = datetime(2025, 11, 2, 6, 30, tzinfo=UTC)
+    localized = [display_time(value, zone) for value in (first_utc, second_utc)]
+    assert [value.fold for value in localized] == [0, 1]
+    assert [value.astimezone(UTC) for value in localized] == [first_utc, second_utc]`,
     verified: ["Behavior outside the transition remains unchanged", "IANA transition data is pinned", "The minimized pair reproduces"],
     unverified: ["Historical pre-1970 transitions", "Leap-second handling", "Zones not present in tzdb 2026c"],
     provenance: {
