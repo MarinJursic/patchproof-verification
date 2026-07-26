@@ -59,6 +59,22 @@ def build_check_run(
             "## Verified properties\n" + _bullets(report.verified_properties, "None"),
             "## Unverified behavior\n"
             + _bullets(report.unverified_behavior, "None reported"),
+            "## Evidence coverage\n"
+            + _bullets(
+                [
+                    "Executable checks: "
+                    + ", ".join(report.evidence_coverage.executable_checks),
+                    "Fixture checks: "
+                    + ", ".join(report.evidence_coverage.fixture_checks),
+                    "Properties exercised: "
+                    + ", ".join(report.evidence_coverage.properties_exercised),
+                    "Counterexample reproduced: "
+                    + str(report.evidence_coverage.counterexample_reproduced).lower(),
+                    "Regression test generated: "
+                    + str(report.evidence_coverage.regression_test_generated).lower(),
+                ],
+                "No coverage facts reported",
+            ),
             "## Generated tests\n"
             + (
                 "\n\n".join(generated_tests)
@@ -89,7 +105,9 @@ def build_check_run(
                 else "No counterexample found in budget"
             ),
             "summary": (
-                f"Evidence confidence: {report.confidence}/100\n\n"
+                "Executable checks: "
+                f"{len(report.evidence_coverage.executable_checks)} · "
+                f"fixture checks: {len(report.evidence_coverage.fixture_checks)}\n\n"
                 f"{report.recommendation}"
             ),
             "text": text[:65_535],
@@ -112,13 +130,17 @@ def render_job_summary(report: VerificationReport) -> str:
             "# PatchProof",
             "",
             f"- Verdict: **{report.verdict.replace('_', ' ').title()}**",
-            f"- Evidence confidence: **{report.confidence}/100**",
+            "- Executable checks: "
+            + ", ".join(report.evidence_coverage.executable_checks),
+            "- Fixture checks: " + ", ".join(report.evidence_coverage.fixture_checks),
+            "- Properties exercised: "
+            + ", ".join(report.evidence_coverage.properties_exercised),
             f"- Counterexample: `{counterexample}`",
             f"- Job: `{report.job_id}`",
             "",
             report.recommendation,
             "",
-            "> Confidence measures evidence quality, not correctness probability.",
+            "> These are named coverage facts, not a correctness probability.",
         ]
     )
 

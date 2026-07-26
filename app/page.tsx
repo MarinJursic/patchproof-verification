@@ -1,286 +1,346 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { scenarioById, scenarios } from "./data/scenarios";
 
-type Theme = "dark" | "light";
+type Theme = "light" | "dark";
+type LedgerTab = "finding" | "test" | "scope" | "provenance";
+type CopyState = "idle" | "copied" | "failed";
 
-type Stage = {
-  id: string;
-  label: string;
-  detail: string;
-  status: "pass" | "warn" | "fail" | "pending";
-  worker: string;
-  duration: string;
-  evidence: "fixture" | "executable";
-};
+const LEDGER_TABS: LedgerTab[] = ["finding", "test", "scope", "provenance"];
 
-const stages: Stage[] = [
-  { id: "tests", label: "Existing tests", detail: "214 / 214 passed", status: "pass", worker: "test-runner", duration: "1.2s", evidence: "fixture" },
-  { id: "types", label: "Type contracts", detail: "0 violations", status: "pass", worker: "pyright", duration: "0.4s", evidence: "fixture" },
-  { id: "mutation", label: "Mutation probe", detail: "locale branch survived", status: "warn", worker: "mutator", duration: "1.7s", evidence: "fixture" },
-  { id: "property", label: "Generated property", detail: "locale-aware case equivalence failed", status: "fail", worker: "property-engine", duration: "2.1s", evidence: "executable" },
-  { id: "shrink", label: "Input minimized", detail: "30 code points → 2", status: "fail", worker: "shrinker", duration: "0.3s", evidence: "executable" },
-  { id: "behavior", label: "Behavioral diff", detail: "old valid · patch violates", status: "fail", worker: "differential", duration: "0.1s", evidence: "executable" },
-];
+function stateSymbol(state: "pass" | "warn" | "fail" | "unverified") {
+  return state === "pass" ? "✓" : state === "fail" ? "×" : state === "warn" ? "!" : "·";
+}
 
-const diff = [
-  { kind: "same", line: "export function equalFolded(a: string, b: string, locale: string) {" },
-  { kind: "remove", line: "  return a.toLocaleLowerCase(locale)" },
-  { kind: "remove", line: "    === b.toLocaleLowerCase(locale);" },
-  { kind: "add", line: "  return a.toLowerCase()" },
-  { kind: "add", line: "    === b.toLowerCase();" },
-  { kind: "same", line: "}" },
-] as const;
-
-const shrinkFrames = [
-  { label: "GENERATED · 30 code points", value: "[\"İSTANBUL PORTAL\", \"istanbul portal\"]", progress: "0 / 14 accepted reductions" },
-  { label: "REDUCED · 16 code points", value: "[\"İSTANBUL\", \"istanbul\"]", progress: "7 / 14 accepted reductions" },
-  { label: "1-MINIMAL · 2 code points", value: "[\"İ\", \"i\"]", progress: "14 / 14 accepted reductions" },
-] as const;
+function traceTimestamp(stages: { duration: string }[], endIndex: number) {
+  const elapsedMs = stages
+    .slice(0, endIndex)
+    .reduce((total, stage) => total + Math.round(Number.parseFloat(stage.duration) * 1000), 0);
+  return new Date(Date.UTC(2026, 6, 25, 14, 34, 25, 42) + elapsedMs)
+    .toISOString()
+    .slice(11, 23) + "Z";
+}
 
 export default function Home() {
-  const [activeStage, setActiveStage] = useState(stages.length - 1);
+  const [scenarioId, setScenarioId] = useState(scenarios[0].id);
+  const scenario = scenarioById[scenarioId];
+  const [position, setPosition] = useState(scenario.stages.length);
+  const [selectedStageId, setSelectedStageId] = useState(scenario.stages.at(-1)?.id ?? "");
   const [running, setRunning] = useState(false);
-  const [tab, setTab] = useState<"evidence" | "report">("evidence");
-  const [theme, setTheme] = useState<Theme>("dark");
+  const [ledgerTab, setLedgerTab] = useState<LedgerTab>("finding");
+  const [traceOpen, setTraceOpen] = useState(true);
+  const [theme, setTheme] = useState<Theme>("light");
+  const [copyState, setCopyState] = useState<CopyState>("idle");
+
+  const selectedStage =
+    scenario.stages.find((stage) => stage.id === selectedStageId) ?? scenario.stages[0];
+  const selectedStageIndex = scenario.stages.findIndex((stage) => stage.id === selectedStage.id);
+  const selectedStageComplete = selectedStageIndex >= 0 && selectedStageIndex < position;
+  const runComplete = position >= scenario.stages.length;
+
+  useEffect(() => {
+    const saved = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
+    setTheme(saved);
+  }, []);
 
   useEffect(() => {
     if (!running) return;
-    if (activeStage >= stages.length - 1) {
-      const finishTimer = window.setTimeout(() => setRunning(false), 160);
-      return () => window.clearTimeout(finishTimer);
+    if (position >= scenario.stages.length) {
+      setRunning(false);
+      return;
     }
-    const timer = window.setTimeout(() => setActiveStage((value) => value + 1), 620);
+    const timer = window.setTimeout(() => {
+      const next = position + 1;
+      setPosition(next);
+      setSelectedStageId(scenario.stages[Math.max(0, next - 1)].id);
+    }, 720);
     return () => window.clearTimeout(timer);
-  }, [running, activeStage]);
+  }, [position, running, scenario]);
 
-  useEffect(() => {
-    const currentTheme =
-      document.documentElement.dataset.theme === "light" ? "light" : "dark";
-    setTheme(currentTheme);
-  }, []);
+  const completedStages = useMemo(
+    () => scenario.stages.slice(0, position),
+    [position, scenario],
+  );
 
-  const completed = useMemo(() => stages.slice(0, activeStage + 1), [activeStage]);
-  const shrinkFrame = shrinkFrames[activeStage < 4 ? 0 : activeStage === 4 ? 1 : 2];
+  function chooseScenario(id: string) {
+    const next = scenarioById[id];
+    setScenarioId(id);
+    setPosition(next.stages.length);
+    setSelectedStageId(next.stages.at(-1)?.id ?? "");
+    setRunning(false);
+    setLedgerTab("finding");
+    setCopyState("idle");
+  }
 
   function replay() {
-    setActiveStage(-1);
+    setPosition(0);
+    setSelectedStageId(scenario.stages[0].id);
     setRunning(true);
-    window.setTimeout(() => setActiveStage(0), 180);
+  }
+
+  function continueReplay() {
+    if (running) {
+      setRunning(false);
+      return;
+    }
+    if (runComplete) {
+      setPosition(0);
+      setSelectedStageId(scenario.stages[0].id);
+    }
+    setRunning(true);
+  }
+
+  function step() {
+    setRunning(false);
+    const next = position >= scenario.stages.length ? 1 : position + 1;
+    setPosition(next);
+    setSelectedStageId(scenario.stages[Math.max(0, next - 1)].id);
   }
 
   function toggleTheme() {
-    const nextTheme: Theme = theme === "dark" ? "light" : "dark";
-    document.documentElement.dataset.theme = nextTheme;
-    document.documentElement.style.colorScheme = nextTheme;
-    window.localStorage.setItem("patchproof-theme", nextTheme);
-    setTheme(nextTheme);
+    const next = theme === "light" ? "dark" : "light";
+    document.documentElement.dataset.theme = next;
+    document.documentElement.style.colorScheme = next;
+    window.localStorage.setItem("patchproof-theme", next);
+    setTheme(next);
+  }
+
+  async function copyTest() {
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
+      await navigator.clipboard.writeText(scenario.generatedTest);
+      setCopyState("copied");
+    } catch {
+      setCopyState("failed");
+    }
+    window.setTimeout(() => setCopyState("idle"), 1600);
+  }
+
+  function exportEvidence() {
+    const payload = JSON.stringify({ scenario, selectedStage, replayPosition: position }, null, 2);
+    const url = URL.createObjectURL(new Blob([payload], { type: "application/json" }));
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `patchproof-${scenario.id}-evidence.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
   }
 
   return (
-    <main>
-      <header className="topbar">
-        <a className="brand" href="#top" aria-label="PatchProof home">
-          <span className="brand-mark" aria-hidden="true">P</span>
-          <span>PatchProof</span>
-          <span className="version">v0.1</span>
+    <main className={`workbench ${traceOpen ? "trace-is-open" : ""}`}>
+      <header className="command-bar">
+        <a className="wordmark" href="#workspace" aria-label="PatchProof workbench">
+          <span aria-hidden="true">P/</span> PATCHPROOF
         </a>
-        <nav aria-label="Primary navigation">
-          <a href="#proof">Proof</a>
-          <a href="#evidence">Evidence</a>
-          <a href="#architecture">Architecture</a>
-        </nav>
-        <div className="header-actions">
-          <button
-            className="theme-toggle"
-            type="button"
-            onClick={toggleTheme}
-            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
-            aria-pressed={theme === "light"}
-            title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
-          >
-            <span aria-hidden="true">{theme === "dark" ? "☼" : "☾"}</span>
-            <span>{theme === "dark" ? "Light" : "Dark"}</span>
+        <div className="crumbs" aria-label="Current patch">
+          <span>{scenario.repository}</span><b>/</b><span>{scenario.patchRef}</span><b>/</b><strong>{scenario.sourceFile}</strong>
+        </div>
+        <div className="command-actions">
+          <span className="recorded-badge"><i /> {scenario.provenance.classification}</span>
+          <button type="button" onClick={exportEvidence}>Export JSON</button>
+          <button type="button" onClick={toggleTheme} aria-label={`Switch to ${theme === "light" ? "dark" : "light"} theme`}>
+            {theme === "light" ? "Dark" : "Light"}
           </button>
-          <a className="ghost-button" href="#integration-seams">Integration seams ↓</a>
         </div>
       </header>
 
-      <section className="hero" id="top">
-        <div className="hero-copy">
-          <div className="eyebrow"><span className="pulse" /> Adversarial verification · deterministic demo</div>
-          <h1>Your tests passed.<br /><span>Your patch didn’t.</span></h1>
-          <p className="lede">
-            PatchProof tries to disprove a code change with executable evidence—then shrinks the failure
-            to the smallest counterexample a reviewer can act on.
-          </p>
-          <div className="hero-actions">
-            <button className="primary-button" onClick={replay} disabled={running}>
-              <span aria-hidden="true">{running ? "···" : "▶"}</span>
-              {running ? "Verification running" : "Replay verification"}
+      <aside className="run-rail" aria-label="Verification scenarios">
+        <div className="rail-heading">
+          <span>Evidence cases</span>
+          <strong>03</strong>
+        </div>
+        <div className="scenario-list">
+          {scenarios.map((item, index) => (
+            <button
+              type="button"
+              key={item.id}
+              className={item.id === scenarioId ? "active" : ""}
+              aria-pressed={item.id === scenarioId}
+              onClick={() => chooseScenario(item.id)}
+            >
+              <small>0{index + 1}</small>
+              <span><strong>{item.shortLabel}</strong><em>{item.repository}</em></span>
+              <b>×</b>
             </button>
-            <code>patchproof demo</code>
+          ))}
+        </div>
+        <div className="run-manifest">
+          <span>RUN MANIFEST</span>
+          <dl>
+            <div><dt>Verdict</dt><dd className={runComplete ? "fail-text" : ""}>{runComplete ? scenario.verdict : "PENDING"}</dd></div>
+            <div><dt>Completed</dt><dd>{completedStages.length}/{scenario.stages.length}</dd></div>
+            <div><dt>Seed</dt><dd>20260725</dd></div>
+            <div><dt>Bundle</dt><dd>{scenario.provenance.digest.slice(7, 17)}</dd></div>
+          </dl>
+        </div>
+        <p className="rail-note">Pages replays a report generated by the Python verifier. Arbitrary code is not executed in this browser.</p>
+      </aside>
+
+      <section className="workspace" id="workspace" aria-label="Patch evidence workspace">
+        <div className="case-heading">
+          <div>
+            <span>CASE / {scenario.id}</span>
+            <h1>{scenario.title}</h1>
+            <p>{scenario.question}</p>
           </div>
-          <div className="signal-row" aria-label="Verification summary">
-            <div><strong>82%</strong><span>confidence</span></div>
-            <div><strong>2</strong><span>properties verified</span></div>
-            <div><strong>1</strong><span>counterexample</span></div>
+          <div className="transport" role="toolbar" aria-label="Verification replay">
+            <button type="button" onClick={replay} disabled={running}>↻ Replay</button>
+            <button type="button" onClick={continueReplay} aria-pressed={running}>
+              {running ? "Ⅱ Pause" : "▶ Continue"}
+            </button>
+            <button type="button" onClick={step}>Step →</button>
           </div>
         </div>
 
-        <div className="patch-window" aria-label="Code patch">
-          <div className="window-bar">
-            <span><i className="dot red" /><i className="dot amber" /><i className="dot green" /></span>
-            <strong>src/search.ts</strong>
-            <span className="commit">8f29d1a</span>
+        <section className="diff-sheet" aria-label={`Patch in ${scenario.sourceFile}`}>
+          <div className="sheet-bar">
+            <span>{scenario.sourceFile}</span>
+            <span><b className="add-text">+1</b><b className="fail-text">−{scenario.diff.filter((line) => line.kind === "remove").length}</b></span>
           </div>
-          <div className="diff-meta"><span>AI-generated patch</span><span className="green-text">+2</span><span className="red-text">−3</span></div>
-          <pre className="diff">
-            {diff.map((row, index) => (
-              <span key={`${row.kind}-${index}`} className={row.kind}>
-                <b>{row.kind === "add" ? "+" : row.kind === "remove" ? "−" : " "}</b>{row.line}
+          <pre className="code-diff">
+            {scenario.diff.map((line, index) => (
+              <span className={line.kind} key={`${line.number}-${index}`}>
+                <i>{line.number}</i><b>{line.kind === "add" ? "+" : line.kind === "remove" ? "−" : " "}</b><code>{line.text}</code>
               </span>
             ))}
           </pre>
-          <div className="patch-footer">
-            <span className="check">✓</span>
-            <div><strong>Original test suite</strong><small>214 passed · 0 failed</small></div>
-            <span className="passed">PASSED</span>
+        </section>
+
+        <section className="evidence-pipeline" aria-labelledby="pipeline-title">
+          <div className="subhead"><span id="pipeline-title">EXECUTION LEDGER</span><span>{running ? "RUNNING" : "COMPLETE"} · {position}/{scenario.stages.length}</span></div>
+          <div className="stage-list" aria-live="polite">
+            {scenario.stages.map((stage, index) => {
+              const complete = index < position;
+              const selected = stage.id === selectedStage.id;
+              return (
+                <button
+                  type="button"
+                  key={stage.id}
+                  className={`${complete ? stage.state : "pending"} ${selected ? "selected" : ""}`}
+                  onClick={() => { if (complete) setSelectedStageId(stage.id); }}
+                  disabled={!complete}
+                  aria-current={selected ? "step" : undefined}
+                >
+                  <span className="stage-index">0{index + 1}</span>
+                  <span className="stage-state">{complete ? stateSymbol(stage.state) : "·"}</span>
+                  <span className="stage-copy"><strong>{stage.label}</strong><small>{complete ? stage.summary : "waiting"}</small></span>
+                  <code>{stage.engine}</code>
+                  <time>{complete ? stage.duration : "—"}</time>
+                </button>
+              );
+            })}
           </div>
-        </div>
+        </section>
+
+        <section className="stage-detail" aria-label="Selected stage evidence">
+          <div><span>COMMAND</span><code>{selectedStageComplete ? selectedStage.command : "Gated until this replay step completes"}</code></div>
+          <div><span>OBSERVED OUTPUT</span><code>{selectedStageComplete ? selectedStage.output : "No output disclosed yet"}</code></div>
+          <div><span>SCOPE</span><p>{selectedStageComplete ? selectedStage.scope : "Pending execution-ledger replay"}</p></div>
+        </section>
       </section>
 
-      <section className="proof-section" id="proof">
-        <div className="section-heading">
-          <div>
-            <span className="kicker">Verification proof</span>
-            <h2>One patch. Six evidence stages.</h2>
-          </div>
-          <div className="run-status">
-            <span className={running ? "spinner" : "status-stop"} />
-            <div><strong>{running ? "Workers active" : "Completed with counterexample"}</strong><small>run pp_01JQ9V8K · seed 20260725</small></div>
-          </div>
+      <aside className="evidence-ledger" aria-label="Evidence ledger">
+        <div className="verdict-block">
+          <span>PATCH DISPOSITION</span>
+          <strong>{runComplete ? "Request changes" : "Replay in progress"}</strong>
+          <p>{runComplete ? "Executable behavior diverges from the reference on a minimized input." : "Final evidence remains gated until all six recorded stages are replayed."}</p>
         </div>
-
-        <div className="proof-layout">
-          <div className="graph-card">
-            <div className="root-node">
-              <span className="branch-icon">⌘</span>
-              <div><strong>Patch 8f29d1a</strong><small>equalFolded locale refactor</small></div>
-              <span className="risk-chip">RISK 7.4</span>
-            </div>
-            <div className="stage-list" aria-live="polite">
-              {stages.map((stage, index) => {
-                const visible = index <= activeStage;
-                return (
-                  <div className={`stage-row ${visible ? "visible" : "hidden"}`} key={stage.id}>
-                    <span className="connector" aria-hidden="true" />
-                    <span className={`status-icon ${visible ? stage.status : "pending"}`}>
-                      {visible ? (stage.status === "pass" ? "✓" : stage.status === "warn" ? "!" : "×") : "·"}
-                    </span>
-                    <div className="stage-text">
-                      <strong>{stage.label}<em>{stage.evidence}</em></strong>
-                      <small>{visible ? stage.detail : "waiting"}</small>
-                    </div>
-                    <code>{stage.worker}</code>
-                    <time>{visible ? stage.duration : "—"}</time>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <aside className="finding-card" aria-label="Primary finding">
-            <div className="finding-head"><span>COUNTEREXAMPLE #1</span><span className="severity">HIGH</span></div>
-            <h3>Locale-sensitive membership changed</h3>
-            <p>The patch removed locale-aware case folding. Turkish dotted capital I no longer matches its lowercase form.</p>
-            <div className="shrink-flow" aria-live="polite">
-              <div className={activeStage >= 5 ? "minimal" : undefined}>
-                <small>{shrinkFrame.label}</small>
-                <code>{shrinkFrame.value}</code>
-              </div>
-              <span>↓ {shrinkFrame.progress}</span>
-              <div className="trace-note">
-                <small>EXECUTABLE SHRINK TRACE</small>
-                <code>Every accepted candidate preserves old=true · patched=false</code>
-              </div>
-            </div>
-            <div className="behavior-grid">
-              <div><small>OLD · tr-TR</small><strong className="green-text">true</strong><code>&quot;i&quot; === &quot;i&quot;</code></div>
-              <div><small>PATCHED</small><strong className="red-text">false</strong><code>&quot;i̇&quot; !== &quot;i&quot;</code></div>
-            </div>
-            <div className="invariant"><span>PROPERTY</span><code>old(x, y, locale) ⇒ patched(x, y)</code></div>
-          </aside>
-        </div>
-      </section>
-
-      <section className="evidence-section" id="evidence">
-        <div className="section-heading">
-          <div><span className="kicker">Review packet</span><h2>Evidence, not verdicts.</h2></div>
-          <div
-            className="tabs"
-            role="tablist"
-            aria-label="Review packet"
-            onKeyDown={(event) => {
-              if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+        <div className="ledger-tabs" role="tablist" aria-label="Evidence views">
+          {LEDGER_TABS.map((tab) => (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={ledgerTab === tab}
+              key={tab}
+              disabled={!runComplete && tab !== "provenance"}
+              onClick={() => setLedgerTab(tab)}
+              onKeyDown={(event) => {
+                if (!["ArrowLeft", "ArrowRight"].includes(event.key)) return;
                 event.preventDefault();
-                const nextTab = tab === "evidence" ? "report" : "evidence";
-                setTab(nextTab);
-                window.requestAnimationFrame(() => {
-                  document.getElementById(
-                    nextTab === "evidence" ? "counterexample-tab" : "confidence-tab",
-                  )?.focus();
-                });
-              }
-            }}
-          >
-            <button id="counterexample-tab" role="tab" aria-controls="counterexample-panel" aria-selected={tab === "evidence"} tabIndex={tab === "evidence" ? 0 : -1} onClick={() => setTab("evidence")}>Counterexample</button>
-            <button id="confidence-tab" role="tab" aria-controls="confidence-panel" aria-selected={tab === "report"} tabIndex={tab === "report" ? 0 : -1} onClick={() => setTab("report")}>Confidence report</button>
-          </div>
+                const direction = event.key === "ArrowRight" ? 1 : -1;
+                const enabled = LEDGER_TABS.filter((item) => runComplete || item === "provenance");
+                const next = enabled[(enabled.indexOf(tab) + direction + enabled.length) % enabled.length];
+                setLedgerTab(next);
+                const target = event.currentTarget.parentElement?.querySelector<HTMLButtonElement>(`button[role="tab"]:nth-child(${LEDGER_TABS.indexOf(next) + 1})`);
+                window.setTimeout(() => target?.focus(), 0);
+              }}
+            >
+              {tab}
+            </button>
+          ))}
         </div>
-        {tab === "evidence" ? (
-          <div className="evidence-grid" id="counterexample-panel" role="tabpanel" aria-labelledby="counterexample-tab">
-            <article><span className="metric-label">VERIFIED</span><strong>2 / 3</strong><p>Existing examples and API shape hold. Locale-invariant behavior does not.</p></article>
-            <article><span className="metric-label amber-text">UNVERIFIED</span><strong>2</strong><p>Concurrent cache access and non-BMP normalization remain outside this run’s budget.</p></article>
-            <article><span className="metric-label cyan-text">GENERATED TEST</span><strong>1</strong><p><code>test_equal_folded_tr_tr_counterexample</code> is ready to paste into the repository.</p></article>
-            <article><span className="metric-label">PERFORMANCE · FIXTURE</span><strong>−3.1%</strong><p>Illustrative median-latency fixture; run repository benchmarks before using it as evidence.</p></article>
-            <article><span className="metric-label">API COMPATIBILITY · FIXTURE</span><strong className="green-text">Compatible</strong><p>The demo fixture records an unchanged export, parameters, and return type; no external checker ran.</p></article>
-            <article className="recommendation"><span className="metric-label">RECOMMENDATION</span><strong>Request changes</strong><p>Restore locale-aware folding and commit the generated regression test.</p></article>
+
+        {!runComplete && ledgerTab !== "provenance" && (
+          <div className="ledger-panel evidence-gated" role="tabpanel">
+            <span className="panel-label">FINAL EVIDENCE GATED</span>
+            <p>Complete all six replay stages to disclose the counterexample, regression, and established scope.</p>
           </div>
-        ) : (
-          <div className="confidence-panel" id="confidence-panel" role="tabpanel" aria-labelledby="confidence-tab">
-            <div className="confidence-score"><strong>82</strong><span>/ 100 evidence confidence</span></div>
-            <div className="bar-list">
-              <label>Reproducibility <span>100%</span><i><b style={{ width: "100%" }} /></i></label>
-              <label>Property coverage <span>74%</span><i><b style={{ width: "74%" }} /></i></label>
-              <label>Mutation sensitivity <span>68%</span><i><b style={{ width: "68%" }} /></i></label>
-              <label>Environment coverage <span>43%</span><i><b style={{ width: "43%" }} /></i></label>
+        )}
+
+        {runComplete && ledgerTab === "finding" && (
+          <div className="ledger-panel" role="tabpanel">
+            <span className="panel-label">MINIMIZED COUNTEREXAMPLE</span>
+            <code className="counterexample">{scenario.counterexample.minimized}</code>
+            <p>{scenario.counterexample.property}</p>
+            <div className="behavior-compare">
+              <div><span>REFERENCE</span><strong>{scenario.counterexample.reference}</strong></div>
+              <div><span>PATCHED</span><strong>{scenario.counterexample.patched}</strong></div>
             </div>
-            <p>The component scores are deterministic demo fixtures. Confidence summarizes evidence quality; it is not a probability that the patch is correct or an exhaustive-verification claim.</p>
+            <span className="panel-label">SHRINK TRACE</span>
+            <ol className="shrink-trace">
+              {scenario.counterexample.shrinkTrace.map((frame, index) => <li key={frame}><span>0{index + 1}</span><code>{frame}</code></li>)}
+            </ol>
+          </div>
+        )}
+
+        {runComplete && ledgerTab === "test" && (
+          <div className="ledger-panel" role="tabpanel">
+            <div className="panel-row"><span className="panel-label">GENERATED REGRESSION</span><button type="button" onClick={() => void copyTest()}>{copyState === "copied" ? "Copied" : copyState === "failed" ? "Copy failed" : "Copy"}</button></div>
+            <pre className="generated-test"><code>{scenario.generatedTest}</code></pre>
+            <p>Commit this test with the fix so the minimized behavior becomes part of the repository contract.</p>
+          </div>
+        )}
+
+        {runComplete && ledgerTab === "scope" && (
+          <div className="ledger-panel" role="tabpanel">
+            <span className="panel-label">ESTABLISHED IN THIS RUN</span>
+            <ul className="scope-list verified">{scenario.verified.map((item) => <li key={item}>{item}</li>)}</ul>
+            <span className="panel-label">NOT ESTABLISHED</span>
+            <ul className="scope-list unverified">{scenario.unverified.map((item) => <li key={item}>{item}</li>)}</ul>
+            <p>No correctness probability is inferred from this evidence.</p>
+          </div>
+        )}
+
+        {ledgerTab === "provenance" && (
+          <div className="ledger-panel" role="tabpanel">
+            <span className="panel-label">SOURCE MANIFEST</span>
+            <dl className="provenance">
+              <div><dt>Classification</dt><dd>{scenario.provenance.classification}</dd></div>
+              <div><dt>Source</dt><dd><a href={scenario.provenance.sourceUrl}>{scenario.provenance.source}</a></dd></div>
+              <div><dt>Version</dt><dd>{scenario.provenance.version}</dd></div>
+              <div><dt>License</dt><dd>{scenario.provenance.license}</dd></div>
+              <div><dt>Digest input</dt><dd><code>{scenario.provenance.digestInput}</code></dd></div>
+              <div><dt>Digest</dt><dd><code>{scenario.provenance.digest}</code></dd></div>
+              <div><dt>Generated</dt><dd>{scenario.provenance.generatedAt}</dd></div>
+            </dl>
+            <p>{scenario.provenance.note}</p>
+          </div>
+        )}
+      </aside>
+
+      <section className="trace-drawer" aria-label="Execution trace">
+        <button className="trace-toggle" type="button" onClick={() => setTraceOpen((value) => !value)} aria-expanded={traceOpen}>
+          <span>EXECUTION TRACE · {selectedStage.label}</span><span>{traceOpen ? "Hide ↓" : "Show ↑"}</span>
+        </button>
+        {traceOpen && (
+          <div className="trace-body">
+            <span>{traceTimestamp(scenario.stages, selectedStageIndex)}</span><b className={selectedStageComplete ? selectedStage.state : "unverified"}>●</b><code>{selectedStageComplete ? `$ ${selectedStage.command}` : "$ pending replay step"}</code>
+            <span>{selectedStageComplete ? traceTimestamp(scenario.stages, selectedStageIndex + 1) : "—"}</span><b>↳</b><code>{selectedStageComplete ? selectedStage.output : "No observed output yet"}</code>
+            <span>artifact</span><b>◇</b><code>{runComplete ? scenario.provenance.digest : "Digest disclosed after complete replay"}</code>
           </div>
         )}
       </section>
-
-      <section className="architecture" id="architecture">
-        <span className="kicker">System design</span>
-        <h2>Deterministic at the core. Extensible at the edges.</h2>
-        <div className="architecture-flow" id="integration-seams">
-          <div><span>01</span><strong>PATCH INTAKE</strong><small>diff · metadata · invariants</small></div>
-          <b>→</b>
-          <div><span>02</span><strong>ORCHESTRATOR</strong><small>typed jobs · fixed seed · budget</small></div>
-          <b>→</b>
-          <div><span>03</span><strong>VERIFIERS</strong><small>tests · properties · diff · API</small></div>
-          <b>→</b>
-          <div><span>04</span><strong>PROOF REPORT</strong><small>evidence · gaps · next action</small></div>
-        </div>
-      </section>
-
-      <footer>
-        <div className="brand"><span className="brand-mark" aria-hidden="true">P</span><span>PatchProof</span></div>
-        <p>Built to challenge patches, not rubber-stamp them.</p>
-        <span>Local MVP · deterministic demo</span>
-      </footer>
-      <span className="sr-only" aria-live="polite">{completed.length} verification stages complete</span>
     </main>
   );
 }

@@ -66,12 +66,16 @@ def parser() -> argparse.ArgumentParser:
 
 def summary(report: VerificationReport) -> str:
     data = report.model_dump(mode="json")
+    coverage = data["evidence_coverage"]
     lines = [
         f"PatchProof {data['job_id']} · {data['verdict'].upper()}",
-        (
-            f"confidence: {data['confidence']}/100 "
-            "(evidence quality, not correctness probability)"
-        ),
+        "coverage: executable="
+        + ",".join(coverage["executable_checks"])
+        + " · fixtures="
+        + ",".join(coverage["fixture_checks"]),
+        "coverage facts: "
+        f"counterexample_reproduced={coverage['counterexample_reproduced']} · "
+        f"regression_test_generated={coverage['regression_test_generated']}",
     ]
     if data["counterexamples"]:
         counterexample = data["counterexamples"][0]

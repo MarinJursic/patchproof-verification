@@ -36,11 +36,13 @@ def test_check_payload_contains_complete_evidence() -> None:
     assert '["İ", "i"]' in output["text"]
 
 
-def test_job_summary_is_explicit_about_confidence() -> None:
+def test_job_summary_reports_named_evidence_coverage() -> None:
     summary = render_job_summary(report())
     assert "Request Changes" in summary
     assert '["İ", "i"]' in summary
-    assert "not correctness probability" in summary
+    assert "Executable checks:" in summary
+    assert "Fixture checks:" in summary
+    assert "not a correctness probability" in summary
 
 
 def test_post_uses_checks_endpoint_and_never_logs_token() -> None:

@@ -79,7 +79,7 @@
         },
         "patchproof.targetFile": {
           "type": "string",
-          "default": "src/search.ts",
+          "default": "src/search.py",
           "scope": "resource",
           "description": "Workspace-relative file receiving demo diagnostics."
         }

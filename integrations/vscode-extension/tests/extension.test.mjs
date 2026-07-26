@@ -51,7 +51,14 @@ test("bundled extension activates and publishes a real report through the host",
   const report = {
     job_id: "pp_TEST",
     verdict: "request_changes",
-    confidence: 82,
+    evidence_coverage: {
+      executable_checks: ["generated-property", "counterexample-shrink", "behavioral-diff"],
+      fixture_checks: ["existing-tests", "type-contracts", "mutation-probe"],
+      properties_exercised: ["locale-aware case equivalence"],
+      explicit_gaps: ["concurrent schedules"],
+      counterexample_reproduced: true,
+      regression_test_generated: true,
+    },
     recommendation: "Restore locale-aware folding.",
     counterexamples: [
       {
@@ -171,8 +178,7 @@ test("bundled extension activates and publishes a real report through the host",
   assert.equal(diagnosticWrites.length, 1);
   assert.equal(diagnosticWrites[0][0][1][0].message.includes("[\"İ\",\"i\"]"), true);
   assert.equal(outputLines.some((line) => line.includes("pp_TEST")), true);
-  assert.equal(
-    outputLines.some((line) => line.includes("Evidence confidence: 82/100")),
-    true,
-  );
+  assert.equal(outputLines.some((line) => line.includes("Executable checks: generated-property")), true);
+  assert.equal(outputLines.some((line) => line.includes("Fixture checks: existing-tests")), true);
+  assert.equal(outputLines.some((line) => /confidence|\/100/i.test(line)), false);
 });

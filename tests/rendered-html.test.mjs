@@ -1,12 +1,14 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFile, stat } from "node:fs/promises";
 import test from "node:test";
 
 const root = new URL("../", import.meta.url);
 
-test("PatchProof metadata, evidence labels, and theme behavior are product-specific", async () => {
-  const [page, layout, styles] = await Promise.all([
+test("PatchProof workbench exposes replay controls, evidence semantics, and three sourced cases", async () => {
+  const [page, scenarios, layout, styles] = await Promise.all([
     readFile(new URL("app/page.tsx", root), "utf8"),
+    readFile(new URL("app/data/scenarios.ts", root), "utf8"),
     readFile(new URL("app/layout.tsx", root), "utf8"),
     readFile(new URL("app/globals.css", root), "utf8"),
   ]);
@@ -17,25 +19,41 @@ test("PatchProof metadata, evidence labels, and theme behavior are product-speci
   assert.match(layout, /NEXT_PUBLIC_SITE_URL/);
   assert.match(layout, /NEXT_PUBLIC_BASE_PATH/);
   assert.match(layout, /demo\/patchproof-console\.png/);
-  assert.match(page, /Generated property/);
-  assert.match(page, /Counterexample/);
-  assert.match(page, /API COMPATIBILITY/);
-  assert.match(page, /Replay verification/);
-  assert.match(page, /patchproof demo/);
-  assert.doesNotMatch(page, /patchproof verify demo|https:\/\/github\.com\//);
-  assert.match(page, /30 code points → 2/);
-  assert.match(page, /14 accepted reductions/);
-  assert.match(page, /aria-controls="counterexample-panel"/);
-  assert.match(page, /PERFORMANCE · FIXTURE/);
-  assert.match(page, /API COMPATIBILITY · FIXTURE/);
-  assert.match(page, /stage\.evidence/);
+  assert.match(scenarios, /EXECUTABLE ENGINE RUN/);
+  assert.match(scenarios, /AUTHORED BUNDLE · EXECUTABLE FIXTURE/);
+  assert.match(page, /Replay/);
+  assert.match(page, /Pause/);
+  assert.match(page, /Step →/);
+  assert.match(page, /Export JSON/);
+  assert.match(page, /GENERATED REGRESSION/);
+  assert.match(page, /No correctness probability is inferred/);
+  assert.match(page, /EXECUTION TRACE/);
+  assert.match(page, /aria-current=\{selected \? "step"/);
+  assert.match(scenarios, /unicode-turkish-fold/);
+  assert.match(scenarios, /tzdb-ambiguous-fold/);
+  assert.match(scenarios, /quixbugs-shortest-path/);
+  assert.match(scenarios, /Unicode Character Database/);
+  assert.match(scenarios, /IANA Time Zone Database/);
+  assert.match(scenarios, /no upstream source copied/);
+  assert.match(scenarios, /30 → 2 code points/);
+  assert.match(scenarios, /14 accepted reductions/);
+  const digestInputs = [...scenarios.matchAll(/digestInput: "([^"]+)"/g)].map((match) => match[1]);
+  const digests = [...scenarios.matchAll(/digest: "sha256:([0-9a-f]+)"/g)].map((match) => match[1]);
+  assert.equal(digestInputs.length, 3);
+  assert.equal(digests.length, 3);
+  assert.deepEqual(
+    digests,
+    digestInputs.map((value) => createHash("sha256").update(value).digest("hex")),
+  );
   assert.match(page, /aria-label={`Switch to/);
   assert.match(page, /localStorage\.setItem\("patchproof-theme"/);
   assert.match(layout, /localStorage\.getItem\("patchproof-theme"/);
   assert.match(layout, /prefers-color-scheme: light/);
   assert.match(layout, /suppressHydrationWarning/);
-  assert.match(styles, /:root\[data-theme="light"\]/);
+  assert.match(styles, /:root\[data-theme="dark"\]/);
   assert.match(styles, /color-scheme: light/);
+  assert.match(styles, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.doesNotMatch(styles, /radial-gradient|linear-gradient/);
 });
 
 test("starter preview has been fully removed", async () => {

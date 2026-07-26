@@ -18,7 +18,14 @@ async function importTypeScript(relativePath) {
 
 const report = {
   verdict: "request_changes",
-  confidence: 82,
+  evidence_coverage: {
+    executable_checks: ["generated-property", "counterexample-shrink", "behavioral-diff"],
+    fixture_checks: ["existing-tests", "type-contracts", "mutation-probe"],
+    properties_exercised: ["locale-aware case equivalence"],
+    explicit_gaps: ["concurrent schedules"],
+    counterexample_reproduced: true,
+    regression_test_generated: true,
+  },
   recommendation: "Restore locale-aware folding.",
   verified_properties: ["ASCII behavior"],
   unverified_behavior: ["concurrent schedules"],
@@ -47,7 +54,8 @@ test("GitHub adapter publishes the complete review packet", async () => {
 
   assert.equal(check.status, "completed");
   assert.equal(check.conclusion, "failure");
-  assert.match(check.output.summary, /82\/100/);
+  assert.match(check.output.summary, /Executable checks: 3 · fixture checks: 3/);
+  assert.doesNotMatch(check.output.summary, /confidence|\/100/i);
   assert.match(check.output.text, /Executable counterexamples/);
   assert.match(check.output.text, /Verified properties/);
   assert.match(check.output.text, /Unverified behavior/);
@@ -76,7 +84,7 @@ test("VS Code seam converts findings and drives its host boundary", async () => 
   );
   const findings = toVsCodeFindings(
     { job_id: "pp_TEST", counterexamples: report.counterexamples },
-    "src/search.ts",
+    "src/search.py",
     4,
   );
   const calls = [];
@@ -92,7 +100,7 @@ test("VS Code seam converts findings and drives its host boundary", async () => 
   publishFindings(sink, "pp_TEST", findings);
   assert.deepEqual(findings, [
     {
-      file: "src/search.ts",
+      file: "src/search.py",
       line: 4,
       severity: "error",
       message: "locale-aware case equivalence fails for [\"İ\",\"i\"]",

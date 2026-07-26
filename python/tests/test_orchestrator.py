@@ -16,7 +16,18 @@ def test_report_is_complete_and_reproducible() -> None:
     assert first.api_compatibility.compatible
     assert first.performance.delta_percent == -3.1
     assert len(first.unverified_behavior) == 2
-    assert first.confidence == 82
+    assert first.evidence_coverage.executable_checks == [
+        "generated-property",
+        "counterexample-shrink",
+        "behavioral-diff",
+    ]
+    assert first.evidence_coverage.fixture_checks == [
+        "existing-tests",
+        "type-contracts",
+        "mutation-probe",
+    ]
+    assert first.evidence_coverage.counterexample_reproduced
+    assert first.evidence_coverage.regression_test_generated
     assert first.counterexamples[0].shrink_steps == 14
     assert len(first.counterexamples[0].shrink_trace) == 15
     assert {check.id for check in first.checks} == {
@@ -71,7 +82,9 @@ def test_no_finding_report_is_honest_and_inconclusive() -> None:
     assert report.verdict == "inconclusive"
     assert report.counterexamples == []
     assert report.generated_tests == []
-    assert report.confidence < 82
+    assert report.evidence_coverage.counterexample_reproduced is False
+    assert report.evidence_coverage.regression_test_generated is False
+    assert report.evidence_coverage.executable_checks == ["generated-property"]
     assert "Expand the verification budget" in report.recommendation
 
 

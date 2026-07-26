@@ -5,29 +5,34 @@
 [![Live preview](https://img.shields.io/badge/live-preview-2ea44f?logo=github)](https://marinjursic.github.io/patchproof-verification/)
 [![Preview status](https://github.com/MarinJursic/patchproof-verification/actions/workflows/pages.yml/badge.svg)](https://github.com/MarinJursic/patchproof-verification/actions/workflows/pages.yml)
 
-PatchProof does not ask only whether the existing tests pass. It asks whether it can construct an input that makes the patch violate an invariant—and only reports a defect when it has executable evidence.
+PatchProof is an evidence workbench for a harder code-review question: can a passing
+patch be falsified by a small, replayable counterexample? It keeps the diff, command,
+observed output, scope, gaps, generated regression, source manifest, and artifact
+digest together so a reviewer can audit the finding without inferring correctness from
+presentation polish.
 
 ## Continuous app walkthrough
 
-[![Continuous PatchProof walkthrough replaying verification, inspecting evidence confidence, and switching themes](docs/walkthrough/app-walkthrough.gif)](docs/walkthrough/app-walkthrough.mp4)
+[![Continuous PatchProof walkthrough replaying verification, inspecting evidence coverage, and switching themes](docs/walkthrough/app-walkthrough.gif)](docs/walkthrough/app-walkthrough.mp4)
 
 [Watch the full-resolution H.264 walkthrough](docs/walkthrough/app-walkthrough.mp4) · [Open the poster frame](docs/walkthrough/app-walkthrough-poster.jpg)
 
-This uninterrupted 19-second capture shows the running application:
+The uninterrupted capture shows one continuous review session in the real
+application:
 
-- replaying all six verification stages from the passing baseline through the
-  executable property, minimization, and behavioral-difference checks;
-- reducing the Turkish case-folding failure to `["İ", "i"]`, where the
-  reference returns `true` and the patch returns `false`;
-- reviewing the actionable counterexample packet and **Request changes**
-  recommendation;
-- opening the confidence report, whose score describes evidence quality rather
-  than patch-correctness probability; and
-- switching the complete interface from light to dark theme.
+- replaying and stepping through the six-stage execution ledger;
+- inspecting command, observed output, strategy scope, and the collapsible trace;
+- switching among the Unicode, DST-fold, and shortest-path cases;
+- reviewing the finding, generated regression, established scope, explicit gaps,
+  provenance, license, and evidence digest;
+- exporting an evidence bundle and switching the complete light/dark theme.
 
 The recording is one continuous pass through the real product, not a composited
-or explanatory animation. `FIXTURE` and `EXECUTABLE` labels remain visible so
-presentation evidence cannot be mistaken for an externally measured result.
+or explanatory animation. `FIXTURE` and `EXECUTABLE` semantics remain explicit in
+the evidence taxonomy. The Unicode case is an **executable engine run**; the DST and
+graph cases are visibly labeled **authored bundle · executable fixture** because their
+reference/patched functions are tested locally while their UI narratives and timings
+are authored. GitHub Pages never executes arbitrary repository code.
 The app is responsive, supports reduced-motion preferences, preserves visible
 keyboard focus, and exposes state through ARIA labels and live regions.
 
@@ -35,7 +40,15 @@ keyboard focus, and exposes state through ARIA labels and live regions.
 
 An all-green test suite proves only that the cases already encoded by that suite passed. PatchProof coordinates additional verification strategies, tracks what each strategy actually established, and explicitly reports what remains outside the execution budget.
 
-The included scenario models a realistic regression:
+The workbench ships three materially different, source-attributed examples:
+
+| Case | Patch risk | Reference basis |
+| --- | --- | --- |
+| Turkish case folding | removing locale-aware mapping changes equality | Unicode 17.0 `SpecialCasing.txt` |
+| Ambiguous local time | replacing timezone conversion collapses DST-fold instants | IANA tzdb 2026c and Python `fold` semantics |
+| Disconnected shortest path | initializing unknown distance to zero makes an unreachable node appear reachable | original local fixture shaped after the MIT-licensed QuixBugs benchmark; no upstream source copied |
+
+The first case models this realistic regression:
 
 ```diff
 - return a.toLocaleLowerCase(locale) === b.toLocaleLowerCase(locale)
@@ -57,15 +70,17 @@ The result is a generated regression test and a **request changes** recommendati
 
 ## What is implemented
 
-- A responsive Next.js/TypeScript verification console with:
-  - patch diff and original-test status;
-  - deterministic worker animation;
-  - proof graph with pass, warning, and failure branches;
-  - generated-property failure and shrink trace;
-  - old/patched execution comparison;
-  - evidence confidence, verified properties, unverified behavior, generated test, performance delta, API compatibility, and recommendation;
-  - keyboard-accessible tabs, visible focus, reduced-motion support, and an
-    accessible light/dark theme toggle with local persistence.
+- A full-height Next.js/TypeScript forensic workbench with:
+  - three selectable evidence cases and exact patch diffs;
+  - replay, pause/continue, and single-step transport controls;
+  - a selectable six-stage ledger with command, output, engine, duration, and scope;
+  - minimized counterexamples, reference/patched comparison, and shrink traces;
+  - generated regression tests with copy support;
+  - separate established-scope and not-established lists;
+  - source/version/license/digest provenance and JSON evidence export;
+  - a collapsible execution trace;
+  - keyboard-operable controls, visible focus, reduced-motion support, responsive
+    layouts, and a persistent full light/dark theme.
 - A typed Python/FastAPI verifier with:
   - content-addressed job IDs derived from every request field;
   - deterministic timestamps, seed, corpus, execution budget, and reports;
@@ -99,13 +114,18 @@ flowchart LR
   C --> I["Verification report"]
   D --> I
   H --> I
-  I --> J["Web proof graph"]
+  I --> J["Recorded evidence bundle"]
+  J --> N["Next.js forensic workbench<br/>replay · scope · provenance"]
   I --> K["CLI / JSON"]
   I --> L["GitHub Action / Check Run"]
   I --> M["Packaged VS Code extension"]
 ```
 
-The web UI and Python service intentionally share the same conceptual report shape. The UI’s confidence score describes **evidence quality**, not the probability that a patch is correct. PatchProof does not claim exhaustive formal verification.
+The static workbench and Python service intentionally share the same conceptual report
+shape, but they are not presented as one live execution surface. The web app replays
+reviewable evidence. The Python package is the executable verifier for the built-in
+Unicode case. PatchProof does not claim exhaustive formal verification, and it never
+turns “no counterexample found” into a correctness probability.
 
 ## Quick start
 
@@ -121,7 +141,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`, then select **Replay verification**.
+Open `http://localhost:3000`, then select **Replay**, **Continue**, or **Step**.
 
 Production check:
 
@@ -301,7 +321,7 @@ def test_equal_folded_tr_tr_counterexample():
 
 ### GitHub
 
-`patchproof.github_check` maps the complete review packet—confidence, verified
+`patchproof.github_check` maps the complete review packet—named evidence coverage, verified
 properties, explicit gaps, generated tests, counterexamples, performance,
 compatibility, and recommendation—to a Checks API body. The CLI defaults to a
 credential-free dry run. `--post` requires `GITHUB_TOKEN`, validates an HTTPS
@@ -348,11 +368,13 @@ The project’s local verification command covers:
 | CLI | JSON, human summary, GitHub dry-run/summary/post failure, inconclusive run, invalid input, and exit-code contracts |
 | Smoke | CLI report parsed by `json.tool` |
 
-The web console is a deterministic presentation of the built-in report rather
-than an API client. Its replay control resets the proof graph and reveals all
-six stages in order. The Python service remains the authoritative executable
-engine. The first three web stages are visibly labeled `FIXTURE`; the property,
-minimization, and behavioral-diff stages are labeled `EXECUTABLE`.
+The web console is a deterministic presentation of recorded evidence rather than an
+API client. Its replay controls reset, continue, pause, and step through six stages;
+interaction tests cover case switching, evidence tabs, copying, theme persistence,
+trace disclosure, and stage selection. The top-level classification, scope panel, and
+provenance manifest keep browser replay distinct from the Python engine. The detailed
+taxonomy above identifies which original Python-demo results are `FIXTURE` and which
+are `EXECUTABLE`.
 
 ## Scope and limitations
 

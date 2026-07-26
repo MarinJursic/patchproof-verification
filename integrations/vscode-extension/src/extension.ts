@@ -15,7 +15,14 @@ const MAX_OUTPUT_BYTES = 1_048_576;
 type VerificationReport = {
   job_id: string;
   verdict: "accept" | "request_changes" | "inconclusive";
-  confidence: number;
+  evidence_coverage: {
+    executable_checks: string[];
+    fixture_checks: string[];
+    properties_exercised: string[];
+    explicit_gaps: string[];
+    counterexample_reproduced: boolean;
+    regression_test_generated: boolean;
+  };
   recommendation: string;
   counterexamples: Array<{
     property_name: string;
@@ -54,7 +61,7 @@ export function activate(context: vscode.ExtensionContext): void {
       const targetFile = safeTargetFile(
         vscode.workspace
           .getConfiguration("patchproof", folder.uri)
-          .get("targetFile", "src/search.ts"),
+          .get("targetFile", "src/search.py"),
       );
       const findings = toVsCodeFindings(
         report,
@@ -64,7 +71,7 @@ export function activate(context: vscode.ExtensionContext): void {
       publishFindings(sink, report.job_id, findings);
       appendReport(output, report);
       const action = await vscode.window.showInformationMessage(
-        `PatchProof: ${report.verdict.replace("_", " ")} (${report.confidence}/100 evidence confidence).`,
+        `PatchProof: ${report.verdict.replace("_", " ")} · ${report.evidence_coverage.executable_checks.length} executable checks, ${report.evidence_coverage.fixture_checks.length} fixture checks.`,
         "Open report",
       );
       if (action === "Open report") output.show(true);
@@ -222,7 +229,9 @@ function parseReport(value: string): VerificationReport {
   const report = JSON.parse(value) as Partial<VerificationReport>;
   if (
     typeof report.job_id !== "string" ||
-    typeof report.confidence !== "number" ||
+    typeof report.evidence_coverage !== "object" ||
+    !Array.isArray(report.evidence_coverage?.executable_checks) ||
+    !Array.isArray(report.evidence_coverage?.fixture_checks) ||
     !Array.isArray(report.counterexamples) ||
     typeof report.recommendation !== "string" ||
     !["accept", "request_changes", "inconclusive"].includes(
@@ -277,7 +286,10 @@ function appendReport(
 ): void {
   output.appendLine(`[PatchProof] Verdict: ${report.verdict}`);
   output.appendLine(
-    `[PatchProof] Evidence confidence: ${report.confidence}/100`,
+    `[PatchProof] Executable checks: ${report.evidence_coverage.executable_checks.join(", ")}`,
+  );
+  output.appendLine(
+    `[PatchProof] Fixture checks: ${report.evidence_coverage.fixture_checks.join(", ")}`,
   );
   output.appendLine(`[PatchProof] ${report.recommendation}`);
   output.appendLine(JSON.stringify(report, null, 2));

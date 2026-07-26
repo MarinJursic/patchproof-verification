@@ -17,6 +17,7 @@ from .models import (
     CheckResult,
     CheckStatus,
     Counterexample,
+    EvidenceCoverage,
     JobStatus,
     PerformanceReport,
     VerificationReport,
@@ -146,9 +147,26 @@ class VerificationOrchestrator:
             job_id=job_id,
             status=JobStatus.COMPLETED,
             verdict="request_changes" if has_failure else "inconclusive",
-            confidence=self._evidence_confidence(
-                checks=checks,
-                has_counterexample=has_failure,
+            evidence_coverage=EvidenceCoverage(
+                executable_checks=[
+                    "generated-property",
+                    "counterexample-shrink",
+                    "behavioral-diff",
+                ]
+                if has_failure
+                else ["generated-property"],
+                fixture_checks=[
+                    "existing-tests",
+                    "type-contracts",
+                    "mutation-probe",
+                ],
+                properties_exercised=["locale-aware case equivalence"],
+                explicit_gaps=[
+                    "concurrent cache access under adversarial schedules",
+                    "normalization behavior for non-BMP grapheme clusters",
+                ],
+                counterexample_reproduced=has_failure,
+                regression_test_generated=bool(generated_tests),
             ),
             seed=request.seed,
             checks=checks,
@@ -178,22 +196,4 @@ class VerificationOrchestrator:
             ),
             started_at=started,
             completed_at=completed,
-        )
-
-    @staticmethod
-    def _evidence_confidence(
-        *, checks: list[CheckResult], has_counterexample: bool
-    ) -> int:
-        """A transparent evidence-coverage score, never correctness probability."""
-        executed = len(checks)
-        executable_finding_bonus = 22 if has_counterexample else 0
-        reproducibility = 20
-        strategy_coverage = min(35, executed * 6)
-        explicit_gaps = 5
-        return min(
-            100,
-            reproducibility
-            + strategy_coverage
-            + executable_finding_bonus
-            + explicit_gaps,
         )

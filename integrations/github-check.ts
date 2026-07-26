@@ -6,7 +6,14 @@
  */
 export type PatchProofSummary = {
   verdict: "accept" | "request_changes" | "inconclusive";
-  confidence: number;
+  evidence_coverage: {
+    executable_checks: string[];
+    fixture_checks: string[];
+    properties_exercised: string[];
+    explicit_gaps: string[];
+    counterexample_reproduced: boolean;
+    regression_test_generated: boolean;
+  };
   recommendation: string;
   verified_properties: string[];
   unverified_behavior: string[];
@@ -44,6 +51,14 @@ export function toGitHubCheck(report: PatchProofSummary) {
     bullets(report.verified_properties, "None"),
     "## Unverified behavior",
     bullets(report.unverified_behavior, "None reported"),
+    "## Evidence coverage",
+    bullets([
+      `Executable checks: ${report.evidence_coverage.executable_checks.join(", ")}`,
+      `Fixture checks: ${report.evidence_coverage.fixture_checks.join(", ")}`,
+      `Properties exercised: ${report.evidence_coverage.properties_exercised.join(", ")}`,
+      `Counterexample reproduced: ${report.evidence_coverage.counterexample_reproduced}`,
+      `Regression test generated: ${report.evidence_coverage.regression_test_generated}`,
+    ], "None reported"),
     "## Generated tests",
     generatedTests || "No regression test was generated.",
     "## Performance",
@@ -58,7 +73,7 @@ export function toGitHubCheck(report: PatchProofSummary) {
     conclusion: failed ? "failure" : report.verdict === "accept" ? "success" : "neutral",
     output: {
       title: failed ? "Executable counterexample found" : "No counterexample found in budget",
-      summary: `Evidence confidence: ${report.confidence}/100\n\n${report.recommendation}`,
+      summary: `Executable checks: ${report.evidence_coverage.executable_checks.length} · fixture checks: ${report.evidence_coverage.fixture_checks.length}\n\n${report.recommendation}`,
       text,
     },
   } as const;

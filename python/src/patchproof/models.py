@@ -69,11 +69,22 @@ class ApiCompatibilityReport(BaseModel):
     note: str
 
 
+class EvidenceCoverage(BaseModel):
+    """Named coverage facts; deliberately not collapsed into a scalar score."""
+
+    executable_checks: list[str]
+    fixture_checks: list[str]
+    properties_exercised: list[str]
+    explicit_gaps: list[str]
+    counterexample_reproduced: bool
+    regression_test_generated: bool
+
+
 class VerificationReport(BaseModel):
     job_id: str
     status: JobStatus
     verdict: Literal["accept", "request_changes", "inconclusive"]
-    confidence: int = Field(ge=0, le=100)
+    evidence_coverage: EvidenceCoverage
     seed: int
     checks: list[CheckResult]
     verified_properties: list[str]
