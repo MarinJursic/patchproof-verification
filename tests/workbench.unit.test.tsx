@@ -5,7 +5,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import Home from "../app/page";
 
 describe("PatchProof forensic workbench", () => {
-  afterEach(() => cleanup());
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
 
   beforeEach(() => {
     window.localStorage.clear();
@@ -20,10 +23,25 @@ describe("PatchProof forensic workbench", () => {
     const user = userEvent.setup();
     render(<Home />);
 
+    expect(
+      screen.getByLabelText(
+        "Evidence source: executed engine run. This describes provenance, not the patch verdict.",
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText("Patch verdict")).toBeTruthy();
+    expect(screen.getByText("FALSIFIED")).toBeTruthy();
+    expect(screen.queryByText("Reviewed evidence")).toBeNull();
+
     expect(screen.getByText("Turkish case folding")).toBeTruthy();
     await user.click(screen.getByRole("button", { name: /DST fold/ }));
     expect(screen.getByText("Ambiguous local time")).toBeTruthy();
     expect(screen.getByText(/IANA tzdb 2026c/)).toBeTruthy();
+    expect(
+      screen.getByLabelText(
+        "Evidence source: recorded executable fixture. This describes provenance, not the patch verdict.",
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText("Recorded fixture")).toBeTruthy();
 
     await user.click(screen.getByRole("button", { name: /Shortest path/ }));
     expect(screen.getByText("Disconnected graph path")).toBeTruthy();
@@ -91,6 +109,31 @@ describe("PatchProof forensic workbench", () => {
     await user.click(screen.getByRole("tab", { name: "Regression test" }));
     await user.click(screen.getByRole("button", { name: "Copy" }));
     expect(screen.getByRole("button", { name: "Copy failed" })).toBeTruthy();
+  });
+
+  it("exports the complete evidence bundle with a scenario-specific filename", async () => {
+    const user = userEvent.setup();
+    let downloadedFilename = "";
+    const click = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(function (this: HTMLAnchorElement) {
+        downloadedFilename = this.download;
+      });
+    const createObjectURL = vi.fn(() => "blob:patchproof-evidence");
+    const revokeObjectURL = vi.fn();
+    Object.defineProperties(URL, {
+      createObjectURL: { configurable: true, value: createObjectURL },
+      revokeObjectURL: { configurable: true, value: revokeObjectURL },
+    });
+    render(<Home />);
+
+    await user.click(screen.getByRole("button", { name: "Export JSON" }));
+
+    expect(createObjectURL).toHaveBeenCalledOnce();
+    expect(click).toHaveBeenCalledOnce();
+    expect(downloadedFilename).toBe(
+      "patchproof-unicode-turkish-fold-evidence.json",
+    );
   });
 
   it("persists the complete theme and exposes the trace drawer state", async () => {

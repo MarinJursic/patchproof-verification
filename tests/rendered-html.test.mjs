@@ -27,6 +27,11 @@ test("PatchProof workbench exposes replay controls, evidence semantics, and thre
   assert.match(page, /Export JSON/);
   assert.match(page, /GENERATED REGRESSION/);
   assert.match(page, /No correctness probability is inferred/);
+  assert.match(page, /Evidence source:/);
+  assert.match(page, /This describes provenance, not the patch verdict/);
+  assert.match(page, /Patch verdict/);
+  assert.doesNotMatch(page, /Reviewed evidence/);
+  assert.match(styles, /\.recorded-badge i[\s\S]*background: var\(--brand\)/);
   assert.match(page, /EXECUTION TRACE/);
   assert.match(page, /aria-current=\{selected \? "step"/);
   assert.match(scenarios, /unicode-turkish-fold/);
@@ -58,7 +63,7 @@ test("PatchProof workbench exposes replay controls, evidence semantics, and thre
 
 test("starter preview has been fully removed", async () => {
   const packageJson = JSON.parse(await readFile(new URL("package.json", root), "utf8"));
-  assert.equal(packageJson.name, "patchproof-verification");
+  assert.equal(packageJson.name, "patchproof");
   assert.equal(packageJson.dependencies["react-loading-skeleton"], undefined);
 });
 

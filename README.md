@@ -2,8 +2,8 @@
 
 **Adversarial software verification for human- and AI-generated patches.**
 
-[![Live preview](https://img.shields.io/badge/live-preview-2ea44f?logo=github)](https://marinjursic.github.io/patchproof-verification/)
-[![Preview status](https://github.com/MarinJursic/patchproof-verification/actions/workflows/pages.yml/badge.svg)](https://github.com/MarinJursic/patchproof-verification/actions/workflows/pages.yml)
+[![Live preview](https://img.shields.io/badge/live-preview-2ea44f?logo=github)](https://marinjursic.github.io/PatchProof/)
+[![Preview status](https://github.com/MarinJursic/PatchProof/actions/workflows/pages.yml/badge.svg)](https://github.com/MarinJursic/PatchProof/actions/workflows/pages.yml)
 
 PatchProof is a verdict-first evidence workbench for a harder code-review question:
 can a passing patch be falsified by a small, replayable counterexample? The default

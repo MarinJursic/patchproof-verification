@@ -191,11 +191,21 @@ export default function Home() {
           <strong>{scenario.sourceFile}</strong>
         </div>
         <div className="command-actions">
-          <span className="recorded-badge">
-            <i />{" "}
+          <span
+            className="recorded-badge"
+            aria-label={`Evidence source: ${
+              scenario.provenance.classification === "EXECUTABLE ENGINE RUN"
+                ? "executed engine run"
+                : "recorded executable fixture"
+            }. This describes provenance, not the patch verdict.`}
+            title="Evidence provenance, not the patch verdict"
+          >
+            <i aria-hidden="true" />
+            <span>Evidence source</span>
+            <b aria-hidden="true">·</b>
             {scenario.provenance.classification === "EXECUTABLE ENGINE RUN"
-              ? "Executed evidence"
-              : "Reviewed evidence"}
+              ? "Engine run"
+              : "Recorded fixture"}
           </span>
           <button
             type="button"
@@ -330,7 +340,7 @@ export default function Home() {
               </dd>
             </div>
             <div>
-              <dt>Finding</dt>
+              <dt>Patch verdict</dt>
               <dd>{runComplete ? scenario.verdict : "PENDING"}</dd>
             </div>
             <div>

@@ -204,11 +204,21 @@ time,
   font-size: 10px;
 }
 
+.recorded-badge span {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.recorded-badge b {
+  color: var(--rule-strong);
+  font-weight: 400;
+}
+
 .recorded-badge i {
   width: 7px;
   height: 7px;
-  border-radius: 50%;
-  background: var(--pass);
+  border-radius: 2px;
+  background: var(--brand);
 }
 
 .case-switcher {
