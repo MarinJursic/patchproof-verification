@@ -7,7 +7,7 @@ const description =
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const metadataBase = new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000");
-const imageUrl = new URL(`${basePath}/demo/patchproof-console.png`, metadataBase).toString();
+const imageUrl = new URL(`${basePath}/patchproof-workbench.jpg`, metadataBase).toString();
 
 export const metadata: Metadata = {
   title,
@@ -18,9 +18,9 @@ export const metadata: Metadata = {
     description: "Executable counterexamples for subtle software regressions.",
     images: [{
       url: imageUrl,
-      width: 1600,
-      height: 1000,
-      alt: "PatchProof adversarial verification console",
+      width: 1280,
+      height: 720,
+      alt: "PatchProof forensic verification workbench",
     }],
   },
   twitter: {

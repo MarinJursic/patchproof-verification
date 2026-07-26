@@ -18,7 +18,7 @@ test("PatchProof workbench exposes replay controls, evidence semantics, and thre
   assert.doesNotMatch(layout, /next\/headers|x-forwarded-host/);
   assert.match(layout, /NEXT_PUBLIC_SITE_URL/);
   assert.match(layout, /NEXT_PUBLIC_BASE_PATH/);
-  assert.match(layout, /demo\/patchproof-console\.png/);
+  assert.match(layout, /patchproof-workbench\.jpg/);
   assert.match(scenarios, /EXECUTABLE ENGINE RUN/);
   assert.match(scenarios, /AUTHORED BUNDLE · EXECUTABLE FIXTURE/);
   assert.match(page, /Replay/);
