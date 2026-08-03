@@ -65,7 +65,7 @@ def test_post_uses_checks_endpoint_and_never_logs_token() -> None:
         captured["timeout"] = timeout
         return FakeResponse()
 
-    payload = {"name": "PatchProof", "head_sha": "d" * 40}
+    payload = {"name": "Patch Verification", "head_sha": "d" * 40}
     response = post_check_run(
         payload,
         repository="patchproof/demo",

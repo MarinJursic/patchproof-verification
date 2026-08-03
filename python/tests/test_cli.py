@@ -87,7 +87,7 @@ def test_github_check_cli_dry_run_uses_standard_environment() -> None:
         env=environment,
     )
     payload = json.loads(result.stdout)
-    assert payload["name"] == "PatchProof"
+    assert payload["name"] == "Patch Verification"
     assert payload["head_sha"] == "a" * 40
     assert payload["conclusion"] == "failure"
     assert payload["output"]["text"].find("İ") >= 0

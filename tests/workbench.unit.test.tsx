@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import Home from "../app/page";
 
-describe("PatchProof forensic workbench", () => {
+describe("Patch Verification forensic workbench", () => {
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();

@@ -1,4 +1,4 @@
-"""PatchProof deterministic verification MVP."""
+"""Patch Verification deterministic verification engine."""
 
 from .orchestrator import VerificationOrchestrator
 

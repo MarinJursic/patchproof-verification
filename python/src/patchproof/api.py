@@ -7,7 +7,7 @@ from .models import JobEnvelope, JobStatus, VerificationRequest
 from .orchestrator import VerificationOrchestrator
 
 app = FastAPI(
-    title="PatchProof Verification API",
+    title="Patch Verification API",
     version="0.1.0",
     description="Typed, deterministic adversarial patch-verification jobs.",
 )

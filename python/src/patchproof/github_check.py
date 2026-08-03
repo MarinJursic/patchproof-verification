@@ -93,7 +93,7 @@ def build_check_run(
         ]
     )
     payload: dict[str, object] = {
-        "name": "PatchProof",
+        "name": "Patch Verification",
         "head_sha": context.head_sha,
         "status": "completed",
         "conclusion": conclusion,
@@ -127,7 +127,7 @@ def render_job_summary(report: VerificationReport) -> str:
     )
     return "\n".join(
         [
-            "# PatchProof",
+            "# Patch Verification",
             "",
             f"- Verdict: **{report.verdict.replace('_', ' ').title()}**",
             "- Executable checks: "

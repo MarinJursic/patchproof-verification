@@ -1,5 +1,5 @@
-name: PatchProof evidence check
-description: Run the deterministic PatchProof verifier and publish a GitHub job summary.
+name: Patch Verification evidence check
+description: Run the deterministic Patch Verification engine and publish a GitHub job summary.
 inputs:
   post-check:
     description: Post a separate GitHub Check Run through the Checks API.
@@ -11,13 +11,13 @@ inputs:
     default: ""
 outputs:
   report:
-    description: Path to the generated PatchProof JSON report.
+    description: Path to the generated Patch Verification JSON report.
     value: ${{ steps.verify.outputs.report }}
 runs:
   using: composite
   steps:
     - id: verify
-      name: Build PatchProof evidence
+      name: Build Patch Verification evidence
       shell: bash
       run: |
         set -euo pipefail

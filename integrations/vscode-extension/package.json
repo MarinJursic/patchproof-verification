@@ -1,7 +1,7 @@
 {
   "name": "patchproof-vscode",
-  "displayName": "PatchProof",
-  "description": "Run PatchProof evidence jobs and surface minimized counterexamples as diagnostics.",
+  "displayName": "Patch Verification",
+  "description": "Run Patch Verification evidence jobs and surface minimized counterexamples as diagnostics.",
   "version": "0.1.0",
   "publisher": "patchproof-local",
   "license": "MIT",
@@ -35,19 +35,19 @@
     "commands": [
       {
         "command": "patchproof.runDemo",
-        "title": "PatchProof: Run Deterministic Demo"
+        "title": "Patch Verification: Run Deterministic Demo"
       },
       {
         "command": "patchproof.openReport",
-        "title": "PatchProof: Open Latest Report"
+        "title": "Patch Verification: Open Latest Report"
       },
       {
         "command": "patchproof.clearDiagnostics",
-        "title": "PatchProof: Clear Diagnostics"
+        "title": "Patch Verification: Clear Diagnostics"
       }
     ],
     "configuration": {
-      "title": "PatchProof",
+      "title": "Patch Verification",
       "properties": {
         "patchproof.executable": {
           "type": "string",

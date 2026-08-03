@@ -179,9 +179,9 @@ export default function Home() {
   return (
     <main className="workbench">
       <header className="command-bar">
-        <a className="wordmark" href="#workspace" aria-label="PatchProof workbench">
+        <a className="wordmark" href="#workspace" aria-label="Patch Verification workbench">
           <span aria-hidden="true">P</span>
-          <strong>PatchProof</strong>
+          <strong>Patch Verification</strong>
         </a>
         <div className="crumbs" aria-label="Current patch">
           <span>{scenario.repository}</span>

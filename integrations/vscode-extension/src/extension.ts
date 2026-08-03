@@ -33,7 +33,7 @@ type VerificationReport = {
 let latestReport: VerificationReport | undefined;
 
 export function activate(context: vscode.ExtensionContext): void {
-  const output = vscode.window.createOutputChannel("PatchProof", { log: true });
+  const output = vscode.window.createOutputChannel("Patch Verification", { log: true });
   const diagnostics =
     vscode.languages.createDiagnosticCollection("patchproof");
   const sink = createDiagnosticSink(diagnostics, output);
@@ -41,20 +41,20 @@ export function activate(context: vscode.ExtensionContext): void {
   const run = vscode.commands.registerCommand("patchproof.runDemo", async () => {
     if (!vscode.workspace.isTrusted) {
       await vscode.window.showWarningMessage(
-        "PatchProof will not start a process until this workspace is trusted.",
+        "Patch Verification will not start a process until this workspace is trusted.",
       );
       return;
     }
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) {
       await vscode.window.showErrorMessage(
-        "Open a workspace folder before running PatchProof.",
+        "Open a workspace folder before running Patch Verification.",
       );
       return;
     }
 
     output.clear();
-    output.appendLine("[PatchProof] Starting deterministic verification.");
+    output.appendLine("[Patch Verification] Starting deterministic verification.");
     try {
       const report = await runVerifier(folder, output);
       latestReport = report;
@@ -71,15 +71,15 @@ export function activate(context: vscode.ExtensionContext): void {
       publishFindings(sink, report.job_id, findings);
       appendReport(output, report);
       const action = await vscode.window.showInformationMessage(
-        `PatchProof: ${report.verdict.replace("_", " ")} · ${report.evidence_coverage.executable_checks.length} executable checks, ${report.evidence_coverage.fixture_checks.length} fixture checks.`,
+        `Patch Verification: ${report.verdict.replace("_", " ")} · ${report.evidence_coverage.executable_checks.length} executable checks, ${report.evidence_coverage.fixture_checks.length} fixture checks.`,
         "Open report",
       );
       if (action === "Open report") output.show(true);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      output.appendLine(`[PatchProof] Failed: ${message}`);
+      output.appendLine(`[Patch Verification] Failed: ${message}`);
       output.show(true);
-      await vscode.window.showErrorMessage(`PatchProof failed: ${message}`);
+      await vscode.window.showErrorMessage(`Patch Verification failed: ${message}`);
     }
   });
 
@@ -88,7 +88,7 @@ export function activate(context: vscode.ExtensionContext): void {
     async () => {
       if (!latestReport) {
         await vscode.window.showInformationMessage(
-          "PatchProof has no report in this extension session.",
+          "Patch Verification has no report in this extension session.",
         );
         return;
       }
@@ -100,7 +100,7 @@ export function activate(context: vscode.ExtensionContext): void {
     "patchproof.clearDiagnostics",
     () => {
       diagnostics.clear();
-      output.appendLine("[PatchProof] Diagnostics cleared.");
+      output.appendLine("[Patch Verification] Diagnostics cleared.");
     },
   );
 
@@ -141,7 +141,7 @@ function runVerifier(
   ];
 
   output.appendLine(
-    `[PatchProof] Executing ${executable} ${args.join(" ")} (shell disabled).`,
+    `[Patch Verification] Executing ${executable} ${args.join(" ")} (shell disabled).`,
   );
   return new Promise((resolve, reject) => {
     const child = spawn(executable, args, {
@@ -238,7 +238,7 @@ function parseReport(value: string): VerificationReport {
       report.verdict ?? "",
     )
   ) {
-    throw new Error("verifier returned an invalid PatchProof report");
+    throw new Error("verifier returned an invalid Patch Verification report");
   }
   return report as VerificationReport;
 }
@@ -264,7 +264,7 @@ function createDiagnosticSink(
             ? vscode.DiagnosticSeverity.Error
             : vscode.DiagnosticSeverity.Warning,
         );
-        diagnostic.source = "PatchProof";
+        diagnostic.source = "Patch Verification";
         const values = grouped.get(finding.file) ?? [];
         values.push(diagnostic);
         grouped.set(finding.file, values);
@@ -274,7 +274,7 @@ function createDiagnosticSink(
       );
     },
     showReport(jobId: string): void {
-      output.appendLine(`[PatchProof] Report ${jobId}`);
+      output.appendLine(`[Patch Verification] Report ${jobId}`);
       output.show(true);
     },
   };
@@ -284,14 +284,14 @@ function appendReport(
   output: vscode.LogOutputChannel,
   report: VerificationReport,
 ): void {
-  output.appendLine(`[PatchProof] Verdict: ${report.verdict}`);
+  output.appendLine(`[Patch Verification] Verdict: ${report.verdict}`);
   output.appendLine(
-    `[PatchProof] Executable checks: ${report.evidence_coverage.executable_checks.join(", ")}`,
+    `[Patch Verification] Executable checks: ${report.evidence_coverage.executable_checks.join(", ")}`,
   );
   output.appendLine(
-    `[PatchProof] Fixture checks: ${report.evidence_coverage.fixture_checks.join(", ")}`,
+    `[Patch Verification] Fixture checks: ${report.evidence_coverage.fixture_checks.join(", ")}`,
   );
-  output.appendLine(`[PatchProof] ${report.recommendation}`);
+  output.appendLine(`[Patch Verification] ${report.recommendation}`);
   output.appendLine(JSON.stringify(report, null, 2));
 }
 
@@ -318,7 +318,7 @@ function safeLocale(value: string): string {
 
 function clampInteger(value: number, minimum: number, maximum: number): number {
   if (!Number.isInteger(value)) {
-    throw new Error("PatchProof numeric configuration must use integers");
+    throw new Error("Patch Verification numeric configuration must use integers");
   }
   return Math.min(maximum, Math.max(minimum, value));
 }

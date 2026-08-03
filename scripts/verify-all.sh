@@ -23,4 +23,4 @@ else
   test "$?" -eq 2
 fi
 
-echo "PatchProof verification passed."
+echo "Patch Verification passed."

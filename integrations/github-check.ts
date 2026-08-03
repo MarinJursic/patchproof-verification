@@ -68,7 +68,7 @@ export function toGitHubCheck(report: PatchProofSummary) {
   ].join("\n\n");
 
   return {
-    name: "PatchProof",
+    name: "Patch Verification",
     status: "completed",
     conclusion: failed ? "failure" : report.verdict === "accept" ? "success" : "neutral",
     output: {

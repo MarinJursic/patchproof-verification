@@ -68,7 +68,7 @@ def summary(report: VerificationReport) -> str:
     data = report.model_dump(mode="json")
     coverage = data["evidence_coverage"]
     lines = [
-        f"PatchProof {data['job_id']} · {data['verdict'].upper()}",
+        f"Patch Verification {data['job_id']} · {data['verdict'].upper()}",
         "coverage: executable="
         + ",".join(coverage["executable_checks"])
         + " · fixtures="

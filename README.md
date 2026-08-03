@@ -1,15 +1,15 @@
-# PatchProof
+# Patch Verification
 
 **Adversarial software verification for human- and AI-generated patches.**
 
-[![Live preview](https://img.shields.io/badge/live-preview-2ea44f?logo=github)](https://marinjursic.github.io/PatchProof/)
-[![Preview status](https://github.com/MarinJursic/PatchProof/actions/workflows/pages.yml/badge.svg)](https://github.com/MarinJursic/PatchProof/actions/workflows/pages.yml)
+[![Live preview](https://img.shields.io/badge/live-preview-2ea44f?logo=github)](https://marinjursic.github.io/PatchVerification/)
+[![Preview status](https://github.com/MarinJursic/PatchVerification/actions/workflows/pages.yml/badge.svg)](https://github.com/MarinJursic/PatchVerification/actions/workflows/pages.yml)
 [![Next.js](https://img.shields.io/badge/Next.js-16-111714?logo=nextdotjs)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Tests](https://img.shields.io/badge/tests-54%20passing-176BCA)](#verification)
 
-PatchProof is a verdict-first evidence workbench for a harder code-review question:
+Patch Verification is a verdict-first evidence workbench for a harder code-review question:
 can a passing patch be falsified by a small, replayable counterexample? The default
 view answers three questions in order—what changed, why it fails, and how the result
 was established—while regression, scope, provenance, and raw trace details remain
@@ -17,7 +17,7 @@ available on demand.
 
 ## Continuous app walkthrough
 
-[![Continuous PatchProof walkthrough replaying verification, inspecting evidence coverage, and switching themes](docs/walkthrough/app-walkthrough.gif)](docs/walkthrough/app-walkthrough.mp4)
+[![Continuous Patch Verification walkthrough replaying verification, inspecting evidence coverage, and switching themes](docs/walkthrough/app-walkthrough.gif)](docs/walkthrough/app-walkthrough.mp4)
 
 [Watch the full-resolution H.264 walkthrough](docs/walkthrough/app-walkthrough.mp4) · [Open the poster frame](docs/walkthrough/app-walkthrough-poster.jpg)
 
@@ -41,7 +41,7 @@ keyboard focus, and exposes state through ARIA labels and live regions.
 
 ## Why this project exists
 
-An all-green test suite proves only that the cases already encoded by that suite passed. PatchProof coordinates additional verification strategies, tracks what each strategy actually established, and explicitly reports what remains outside the execution budget.
+An all-green test suite proves only that the cases already encoded by that suite passed. Patch Verification coordinates additional verification strategies, tracks what each strategy actually established, and explicitly reports what remains outside the execution budget.
 
 The workbench ships three materially different, source-attributed examples:
 
@@ -131,7 +131,7 @@ flowchart LR
 The static workbench and Python service intentionally share the same conceptual report
 shape, but they are not presented as one live execution surface. The web app replays
 reviewable evidence. The Python package is the executable verifier for the built-in
-Unicode case. PatchProof does not claim exhaustive formal verification, and it never
+Unicode case. Patch Verification does not claim exhaustive formal verification, and it never
 turns “no counterexample found” into a correctness probability.
 
 ## Quick start
@@ -229,7 +229,7 @@ code --install-extension \
 ```
 
 Install the Python CLI as shown above, open this workspace, then run
-**PatchProof: Run Deterministic Demo**. The extension auto-detects the
+**Patch Verification: Run Deterministic Demo**. The extension auto-detects the
 project-local virtual environment; `patchproof.executable` overrides it.
 Starting a process requires workspace trust. The process runs without a shell,
 is killed at the configured timeout, and cannot emit more than 1 MiB.
@@ -299,11 +299,11 @@ The job ID hashes the canonical serialization of the entire validated request, s
 
 ### Evidence taxonomy
 
-PatchProof distinguishes executable findings from demo fixtures:
+Patch Verification distinguishes executable findings from demo fixtures:
 
 | Strategy from the product design | MVP status | Evidence in this repository |
 |---|---|---|
-| Existing unit/integration tests | Fixture | A typed check records the built-in demo repository’s `214 / 214` baseline; PatchProof does not claim to execute an external repository |
+| Existing unit/integration tests | Fixture | A typed check records the built-in demo repository’s `214 / 214` baseline; Patch Verification does not claim to execute an external repository |
 | Test amplification | Executable output | The minimized pair is emitted as a syntactically valid pytest regression test |
 | Property/metamorphic testing | Executable | A locale-equivalence implication is evaluated over a deterministic, mutation-guided Unicode corpus |
 | Mutation testing | Fixture + executable guidance | The surviving locale-removal mutant is a fixture; its guidance changes corpus ordering and reaches the executable property |
@@ -401,7 +401,7 @@ For production, isolate every checkout in an ephemeral, network-disabled sandbox
 
 ## Research basis
 
-PatchProof is grounded in execution-first verification:
+Patch Verification is grounded in execution-first verification:
 
 - [SWE-bench](https://www.swebench.com/SWE-bench/) evaluates patches by applying
   them to real repositories and running tests in reproducible containerized
@@ -410,10 +410,10 @@ PatchProof is grounded in execution-first verification:
 - [SWE-smith](https://arxiv.org/abs/2504.21798) describes scalable construction of executable software-engineering task data.
 - [Hypothesis](https://hypothesis.readthedocs.io/en/latest/reference/api.html#hypothesis.Phase)
   documents separate generation, reuse, targeting, and shrinking phases.
-  PatchProof mirrors the execution-and-shrink shape with a much smaller,
+  Patch Verification mirrors the execution-and-shrink shape with a much smaller,
   purpose-built deterministic corpus; it does not embed Hypothesis.
 - [mutmut](https://mutmut.readthedocs.io/en/latest/) describes mutation testing
-  as changing code and checking whether the test suite notices. PatchProof’s
+  as changing code and checking whether the test suite notices. Patch Verification’s
   “mutation probe” is explicitly a fixture plus input-ordering hint, not a real
   mutmut execution.
 - Zeller and Hildebrandt’s original [delta debugging paper](https://www.st.cs.uni-saarland.de/papers/tse2002/tse2002.pdf) motivates systematic reduction of failure-inducing inputs.

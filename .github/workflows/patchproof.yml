@@ -1,11 +1,11 @@
-name: PatchProof integration smoke
+name: Patch Verification integration smoke
 
 on:
   pull_request:
   workflow_dispatch:
     inputs:
       post_check:
-        description: Post a separate PatchProof Check Run
+        description: Post a separate Patch Verification Check Run
         required: false
         default: false
         type: boolean

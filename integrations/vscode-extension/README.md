@@ -1,6 +1,6 @@
-# PatchProof for VS Code
+# Patch Verification for VS Code
 
-This extension runs PatchProof’s deterministic Unicode-locale verifier, converts
+This extension runs Patch Verification’s deterministic Unicode-locale verifier, converts
 its executable counterexample into a VS Code diagnostic, and retains the full
 JSON report in a dedicated output channel.
 
@@ -25,11 +25,11 @@ equivalent). Set `patchproof.executable` when the command is elsewhere.
 
 ## Commands
 
-- **PatchProof: Run Deterministic Demo** starts the verifier without a shell,
+- **Patch Verification: Run Deterministic Demo** starts the verifier without a shell,
   caps captured output at 1 MiB, and terminates it at the configured timeout.
-- **PatchProof: Open Latest Report** opens the output channel for the latest
+- **Patch Verification: Open Latest Report** opens the output channel for the latest
   report held in this extension session.
-- **PatchProof: Clear Diagnostics** removes PatchProof diagnostics.
+- **Patch Verification: Clear Diagnostics** removes Patch Verification diagnostics.
 
 Starting a process requires a trusted workspace. Report viewing and diagnostic
 clearing remain available in restricted mode. Configuration values are

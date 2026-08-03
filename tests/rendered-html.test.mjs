@@ -5,7 +5,7 @@ import test from "node:test";
 
 const root = new URL("../", import.meta.url);
 
-test("PatchProof workbench exposes replay controls, evidence semantics, and three sourced cases", async () => {
+test("Patch Verification workbench exposes replay controls, evidence semantics, and three sourced cases", async () => {
   const [page, scenarios, layout, styles] = await Promise.all([
     readFile(new URL("app/page.tsx", root), "utf8"),
     readFile(new URL("app/data/scenarios.ts", root), "utf8"),
@@ -13,7 +13,7 @@ test("PatchProof workbench exposes replay controls, evidence semantics, and thre
     readFile(new URL("app/globals.css", root), "utf8"),
   ]);
 
-  assert.match(layout, /PatchProof — Adversarial Software Verification/);
+  assert.match(layout, /Patch Verification — Adversarial Software Verification/);
   assert.doesNotMatch(layout, /starter-preview|Your site is taking shape/);
   assert.doesNotMatch(layout, /next\/headers|x-forwarded-host/);
   assert.match(layout, /NEXT_PUBLIC_SITE_URL/);
